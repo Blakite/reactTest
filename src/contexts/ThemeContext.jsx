@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react'
+import { ConfigProvider, theme as antTheme } from 'antd'
+import koKR from 'antd/locale/ko_KR'
 
 const ThemeContext = createContext()
 
@@ -6,44 +8,72 @@ export const themes = {
   dark: {
     name: 'dark',
     colors: {
-      background: '#1a1a2e',
-      sidebar: '#16213e',
-      card: '#16213e',
-      cardHover: '#1e2a47',
-      border: '#2d3a4f',
+      background: '#141414',
+      sidebar: '#1f1f1f',
+      card: '#1f1f1f',
+      cardHover: '#2a2a2a',
+      border: '#303030',
       text: '#ffffff',
       textSecondary: '#888888',
       textMuted: '#666666',
       primary: '#667eea',
       primaryGradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      input: '#1a1a2e',
-      inputBorder: '#444444',
-      success: '#4ade80',
-      warning: '#fbbf24',
-      danger: '#f87171',
+      input: '#1f1f1f',
+      inputBorder: '#434343',
+      success: '#52c41a',
+      warning: '#faad14',
+      danger: '#ff4d4f',
     }
   },
   light: {
     name: 'light',
     colors: {
-      background: '#f5f7fa',
+      background: '#f0f2f5',
       sidebar: '#ffffff',
       card: '#ffffff',
-      cardHover: '#f8f9fa',
-      border: '#e2e8f0',
-      text: '#1a202c',
-      textSecondary: '#4a5568',
-      textMuted: '#a0aec0',
+      cardHover: '#fafafa',
+      border: '#d9d9d9',
+      text: '#000000',
+      textSecondary: '#595959',
+      textMuted: '#8c8c8c',
       primary: '#667eea',
       primaryGradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
       input: '#ffffff',
-      inputBorder: '#e2e8f0',
-      success: '#22c55e',
-      warning: '#f59e0b',
-      danger: '#ef4444',
+      inputBorder: '#d9d9d9',
+      success: '#52c41a',
+      warning: '#faad14',
+      danger: '#ff4d4f',
     }
   }
 }
+
+// Ant Design 테마 설정
+const getAntTheme = (isDark) => ({
+  algorithm: isDark ? antTheme.darkAlgorithm : antTheme.defaultAlgorithm,
+  token: {
+    colorPrimary: '#667eea',
+    colorSuccess: '#52c41a',
+    colorWarning: '#faad14',
+    colorError: '#ff4d4f',
+    colorInfo: '#667eea',
+    borderRadius: 8,
+    fontFamily: "'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+  },
+  components: {
+    Layout: {
+      siderBg: isDark ? '#1f1f1f' : '#ffffff',
+      headerBg: isDark ? '#1f1f1f' : '#ffffff',
+      bodyBg: isDark ? '#141414' : '#f0f2f5',
+    },
+    Menu: {
+      darkItemBg: '#1f1f1f',
+      darkSubMenuItemBg: '#141414',
+    },
+    Table: {
+      headerBg: isDark ? '#1f1f1f' : '#fafafa',
+    },
+  },
+})
 
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(() => {
@@ -53,23 +83,32 @@ export function ThemeProvider({ children }) {
 
   useEffect(() => {
     localStorage.setItem('theme', theme)
+    // body 배경색 변경
+    document.body.style.backgroundColor = themes[theme].colors.background
   }, [theme])
 
   const toggleTheme = () => {
     setTheme(prev => prev === 'dark' ? 'light' : 'dark')
   }
 
+  const isDark = theme === 'dark'
+
   const value = {
     theme,
     setTheme,
     toggleTheme,
     colors: themes[theme].colors,
-    isDark: theme === 'dark',
+    isDark,
   }
 
   return (
     <ThemeContext.Provider value={value}>
-      {children}
+      <ConfigProvider
+        locale={koKR}
+        theme={getAntTheme(isDark)}
+      >
+        {children}
+      </ConfigProvider>
     </ThemeContext.Provider>
   )
 }

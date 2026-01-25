@@ -1,190 +1,150 @@
-import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useTheme } from '../../contexts/ThemeContext'
+import { 
+  Form, Input, Button, Card, Typography, Row, Col, message,
+  UserOutlined, LockOutlined, BankOutlined,
+} from '@/lib/antd'
+import { useTheme } from '@/contexts/ThemeContext'
+
+const { Title, Text, Paragraph } = Typography
 
 function Login() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
   const navigate = useNavigate()
   const { colors } = useTheme()
+  const [form] = Form.useForm()
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    console.log('Login:', { email, password })
+  const handleSubmit = (values) => {
+    console.log('Login:', values)
     localStorage.setItem('isLoggedIn', 'true')
     localStorage.setItem('loginTime', new Date().toLocaleString('ko-KR'))
+    message.success('로그인 성공!')
     navigate('/')
   }
 
-  const styles = getStyles(colors)
-
   return (
-    <div style={styles.container}>
-      <div style={styles.wrapper}>
-        {/* 왼쪽: 겨울산 이미지 */}
-        <div style={styles.imageSection}>
-          <img 
-            src="https://images.unsplash.com/photo-1418985991508-e47386d96a71?w=800&q=80" 
-            alt="Winter Mountain"
-            style={styles.image}
-          />
-          <div style={styles.imageOverlay}>
-            <h2 style={styles.imageTitle}>Welcome Back</h2>
-            <p style={styles.imageText}>🏢 ERP System<br/>업무의 시작</p>
-          </div>
-        </div>
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: colors.background,
+      padding: '20px',
+    }}>
+      <Card
+        style={{
+          width: '100%',
+          maxWidth: 900,
+          borderRadius: 16,
+          overflow: 'hidden',
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15)',
+        }}
+        bodyStyle={{ padding: 0 }}
+      >
+        <Row>
+          {/* 왼쪽: 이미지 섹션 */}
+          <Col xs={0} md={12}>
+            <div style={{
+              position: 'relative',
+              height: '100%',
+              minHeight: 500,
+            }}>
+              <img 
+                src="https://images.unsplash.com/photo-1418985991508-e47386d96a71?w=800&q=80" 
+                alt="Winter Mountain"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  position: 'absolute',
+                }}
+              />
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.1) 100%)',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'flex-end',
+                padding: 40,
+              }}>
+                <Title level={2} style={{ color: '#fff', marginBottom: 10 }}>
+                  Welcome Back
+                </Title>
+                <Paragraph style={{ color: 'rgba(255,255,255,0.85)', fontSize: 16, margin: 0 }}>
+                  <BankOutlined /> ERP System<br/>업무의 시작
+                </Paragraph>
+              </div>
+            </div>
+          </Col>
 
-        {/* 오른쪽: 로그인 폼 */}
-        <div style={styles.formSection}>
-          <h1 style={styles.title}>Login</h1>
-          
-          <form onSubmit={handleSubmit} style={styles.form}>
-            <div style={styles.inputGroup}>
-              <label style={styles.label}>이메일</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="example@email.com"
-                style={styles.input}
-                required
-              />
+          {/* 오른쪽: 로그인 폼 */}
+          <Col xs={24} md={12}>
+            <div style={{ padding: '60px 40px' }}>
+              <div style={{ textAlign: 'center', marginBottom: 40 }}>
+                <BankOutlined style={{ fontSize: 48, color: colors.primary, marginBottom: 16 }} />
+                <Title level={2} style={{ marginBottom: 8 }}>로그인</Title>
+                <Text type="secondary">ERP 시스템에 로그인하세요</Text>
+              </div>
+
+              <Form
+                form={form}
+                layout="vertical"
+                onFinish={handleSubmit}
+                size="large"
+                requiredMark={false}
+              >
+                <Form.Item
+                  name="email"
+                  label="이메일"
+                  rules={[
+                    { required: true, message: '이메일을 입력해주세요' },
+                    { type: 'email', message: '올바른 이메일 형식이 아닙니다' },
+                  ]}
+                >
+                  <Input 
+                    prefix={<UserOutlined />} 
+                    placeholder="example@email.com"
+                  />
+                </Form.Item>
+
+                <Form.Item
+                  name="password"
+                  label="비밀번호"
+                  rules={[{ required: true, message: '비밀번호를 입력해주세요' }]}
+                >
+                  <Input.Password 
+                    prefix={<LockOutlined />} 
+                    placeholder="비밀번호 입력"
+                  />
+                </Form.Item>
+
+                <Form.Item style={{ marginTop: 32 }}>
+                  <Button 
+                    type="primary" 
+                    htmlType="submit" 
+                    block
+                    style={{ 
+                      height: 48,
+                      background: colors.primaryGradient,
+                      border: 'none',
+                    }}
+                  >
+                    로그인
+                  </Button>
+                </Form.Item>
+              </Form>
+
+              <Text type="secondary" style={{ display: 'block', textAlign: 'center' }}>
+                * 아무 이메일/비밀번호로 로그인 가능
+              </Text>
             </div>
-            
-            <div style={styles.inputGroup}>
-              <label style={styles.label}>비밀번호</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="비밀번호 입력"
-                style={styles.input}
-                required
-              />
-            </div>
-            
-            <button type="submit" style={styles.submitButton}>
-              로그인
-            </button>
-          </form>
-          
-          <p style={styles.hint}>
-            * 아무 이메일/비밀번호로 로그인 가능
-          </p>
-        </div>
-      </div>
+          </Col>
+        </Row>
+      </Card>
     </div>
   )
 }
-
-const getStyles = (colors) => ({
-  container: {
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: '100vh',
-    backgroundColor: colors.background,
-    padding: '20px',
-  },
-  wrapper: {
-    display: 'flex',
-    width: '100%',
-    maxWidth: '900px',
-    height: '550px',
-    borderRadius: '16px',
-    overflow: 'hidden',
-    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
-  },
-  imageSection: {
-    flex: 1,
-    position: 'relative',
-    display: 'flex',
-  },
-  image: {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover',
-  },
-  imageOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.1) 100%)',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'flex-end',
-    padding: '40px',
-  },
-  imageTitle: {
-    color: '#fff',
-    fontSize: '2rem',
-    fontWeight: 'bold',
-    marginBottom: '10px',
-    textShadow: '0 2px 10px rgba(0,0,0,0.3)',
-  },
-  imageText: {
-    color: 'rgba(255,255,255,0.85)',
-    fontSize: '1rem',
-    lineHeight: '1.6',
-  },
-  formSection: {
-    flex: 1,
-    backgroundColor: colors.card,
-    padding: '50px 40px',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-  },
-  title: {
-    color: colors.text,
-    textAlign: 'center',
-    marginBottom: '30px',
-    fontSize: '2rem',
-  },
-  form: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '20px',
-  },
-  inputGroup: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px',
-  },
-  label: {
-    color: colors.textSecondary,
-    fontSize: '0.9rem',
-  },
-  input: {
-    padding: '14px 16px',
-    fontSize: '1rem',
-    borderRadius: '8px',
-    border: `1px solid ${colors.inputBorder}`,
-    backgroundColor: colors.input,
-    color: colors.text,
-    outline: 'none',
-    transition: 'border-color 0.2s',
-  },
-  submitButton: {
-    padding: '14px',
-    fontSize: '1rem',
-    fontWeight: 'bold',
-    borderRadius: '8px',
-    border: 'none',
-    background: colors.primaryGradient,
-    color: '#fff',
-    cursor: 'pointer',
-    marginTop: '10px',
-    transition: 'transform 0.2s, box-shadow 0.2s',
-  },
-  hint: {
-    marginTop: '20px',
-    textAlign: 'center',
-    color: colors.textMuted,
-    fontSize: '0.85rem',
-  },
-})
 
 export default Login

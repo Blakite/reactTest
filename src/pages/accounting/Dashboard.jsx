@@ -1,146 +1,101 @@
-import { useTheme } from '../../contexts/ThemeContext'
+import { 
+  Card, Row, Col, Statistic, Table, Tag, Typography,
+  RiseOutlined, FallOutlined, FileTextOutlined, CheckCircleOutlined, DashboardOutlined,
+} from '@/lib/antd'
+
+const { Title } = Typography
 
 function Dashboard() {
-  const { colors } = useTheme()
-  const styles = getStyles(colors)
+  const recentVouchers = [
+    { key: '1', date: '2026-01-17', desc: '사무용품 구입', amount: 150000, status: '승인' },
+    { key: '2', date: '2026-01-16', desc: '외주비 지급', amount: 3500000, status: '대기' },
+    { key: '3', date: '2026-01-15', desc: '매출 입금', amount: 12000000, status: '승인' },
+  ]
+
+  const columns = [
+    { title: '날짜', dataIndex: 'date', key: 'date' },
+    { title: '적요', dataIndex: 'desc', key: 'desc' },
+    { 
+      title: '금액', 
+      dataIndex: 'amount', 
+      key: 'amount',
+      align: 'right',
+      render: (val) => `₩ ${val.toLocaleString()}`,
+    },
+    { 
+      title: '상태', 
+      dataIndex: 'status', 
+      key: 'status',
+      render: (status) => (
+        <Tag color={status === '승인' ? 'success' : 'warning'}>{status}</Tag>
+      ),
+    },
+  ]
 
   return (
     <div>
-      <h2 style={styles.title}>회계 대시보드</h2>
-      
-      <div style={styles.statsGrid}>
-        <div style={styles.statCard}>
-          <span style={styles.statIcon}>📊</span>
-          <div style={styles.statInfo}>
-            <span style={styles.statValue}>₩ 125,000,000</span>
-            <span style={styles.statLabel}>이번달 매출</span>
-          </div>
-        </div>
-        
-        <div style={styles.statCard}>
-          <span style={styles.statIcon}>📉</span>
-          <div style={styles.statInfo}>
-            <span style={styles.statValue}>₩ 45,000,000</span>
-            <span style={styles.statLabel}>이번달 지출</span>
-          </div>
-        </div>
-        
-        <div style={styles.statCard}>
-          <span style={styles.statIcon}>🧾</span>
-          <div style={styles.statInfo}>
-            <span style={styles.statValue}>128건</span>
-            <span style={styles.statLabel}>미결 전표</span>
-          </div>
-        </div>
-        
-        <div style={styles.statCard}>
-          <span style={styles.statIcon}>✅</span>
-          <div style={styles.statInfo}>
-            <span style={styles.statValue}>1,542건</span>
-            <span style={styles.statLabel}>승인 완료</span>
-          </div>
-        </div>
-      </div>
-      
-      <div style={styles.section}>
-        <h3 style={styles.sectionTitle}>최근 전표</h3>
-        <div style={styles.table}>
-          <div style={styles.tableHeader}>
-            <span>날짜</span>
-            <span>적요</span>
-            <span>금액</span>
-            <span>상태</span>
-          </div>
-          {[
-            { date: '2026-01-17', desc: '사무용품 구입', amount: '150,000', status: '승인' },
-            { date: '2026-01-16', desc: '외주비 지급', amount: '3,500,000', status: '대기' },
-            { date: '2026-01-15', desc: '매출 입금', amount: '12,000,000', status: '승인' },
-          ].map((item, i) => (
-            <div key={i} style={styles.tableRow}>
-              <span>{item.date}</span>
-              <span>{item.desc}</span>
-              <span>₩ {item.amount}</span>
-              <span style={{
-                color: item.status === '승인' ? colors.success : colors.warning
-              }}>{item.status}</span>
-            </div>
-          ))}
-        </div>
-      </div>
+      <Title level={4} style={{ marginBottom: 24 }}>
+        <DashboardOutlined /> 회계 대시보드
+      </Title>
+
+      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        <Col xs={24} sm={12} lg={6}>
+          <Card>
+            <Statistic
+              title="이번달 매출"
+              value={125000000}
+              prefix={<RiseOutlined />}
+              suffix="원"
+              valueStyle={{ color: '#52c41a' }}
+              formatter={(value) => `₩ ${Number(value).toLocaleString()}`}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <Card>
+            <Statistic
+              title="이번달 지출"
+              value={45000000}
+              prefix={<FallOutlined />}
+              valueStyle={{ color: '#ff4d4f' }}
+              formatter={(value) => `₩ ${Number(value).toLocaleString()}`}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <Card>
+            <Statistic
+              title="미결 전표"
+              value={128}
+              prefix={<FileTextOutlined />}
+              suffix="건"
+              valueStyle={{ color: '#faad14' }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <Card>
+            <Statistic
+              title="승인 완료"
+              value={1542}
+              prefix={<CheckCircleOutlined />}
+              suffix="건"
+              valueStyle={{ color: '#52c41a' }}
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      <Card title="최근 전표">
+        <Table 
+          columns={columns} 
+          dataSource={recentVouchers}
+          pagination={false}
+          size="middle"
+        />
+      </Card>
     </div>
   )
 }
-
-const getStyles = (colors) => ({
-  title: {
-    color: colors.text,
-    fontSize: '1.5rem',
-    marginBottom: '30px',
-  },
-  statsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-    gap: '20px',
-    marginBottom: '40px',
-  },
-  statCard: {
-    backgroundColor: colors.card,
-    padding: '25px',
-    borderRadius: '12px',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '15px',
-    border: `1px solid ${colors.border}`,
-  },
-  statIcon: {
-    fontSize: '2rem',
-  },
-  statInfo: {
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  statValue: {
-    color: colors.text,
-    fontSize: '1.2rem',
-    fontWeight: 'bold',
-  },
-  statLabel: {
-    color: colors.textSecondary,
-    fontSize: '0.85rem',
-  },
-  section: {
-    backgroundColor: colors.card,
-    padding: '25px',
-    borderRadius: '12px',
-    border: `1px solid ${colors.border}`,
-  },
-  sectionTitle: {
-    color: colors.text,
-    fontSize: '1.1rem',
-    marginBottom: '20px',
-  },
-  table: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '10px',
-  },
-  tableHeader: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 2fr 1fr 1fr',
-    padding: '10px 15px',
-    color: colors.textSecondary,
-    fontSize: '0.85rem',
-    borderBottom: `1px solid ${colors.border}`,
-  },
-  tableRow: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 2fr 1fr 1fr',
-    padding: '12px 15px',
-    color: colors.text,
-    fontSize: '0.9rem',
-    backgroundColor: colors.background,
-    borderRadius: '8px',
-  },
-})
 
 export default Dashboard

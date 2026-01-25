@@ -1,32 +1,23 @@
-import { useTheme } from '../../contexts/ThemeContext'
+import { Card, Typography, Empty, ContainerOutlined } from '@/lib/antd'
+
+const { Title, Text } = Typography
 
 function ContractList() {
-  const { colors } = useTheme()
-  const styles = getStyles(colors)
-
   return (
     <div>
-      <h2 style={styles.title}>계약관리</h2>
-      <p style={styles.desc}>계약 목록 및 관리 화면입니다.</p>
-      <div style={styles.placeholder}>
-        📄 계약관리 기능 구현 예정
-      </div>
+      <Title level={4} style={{ marginBottom: 24 }}>
+        <ContainerOutlined /> 계약관리
+      </Title>
+      <Card>
+        <Empty
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+          description={
+            <Text type="secondary">계약 목록 및 관리 기능 구현 예정</Text>
+          }
+        />
+      </Card>
     </div>
   )
 }
-
-const getStyles = (colors) => ({
-  title: { color: colors.text, fontSize: '1.5rem', marginBottom: '10px' },
-  desc: { color: colors.textSecondary, marginBottom: '30px' },
-  placeholder: {
-    backgroundColor: colors.card,
-    padding: '60px',
-    borderRadius: '12px',
-    textAlign: 'center',
-    color: colors.textMuted,
-    fontSize: '1.2rem',
-    border: `1px solid ${colors.border}`,
-  },
-})
 
 export default ContractList

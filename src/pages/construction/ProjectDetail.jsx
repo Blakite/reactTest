@@ -1,34 +1,31 @@
 import { useParams } from 'react-router-dom'
-import { useTheme } from '../../contexts/ThemeContext'
+import { Card, Typography, Empty, Descriptions, ProfileOutlined } from '@/lib/antd'
+
+const { Title, Text } = Typography
 
 function ProjectDetail() {
   const { id } = useParams()
-  const { colors } = useTheme()
-  const styles = getStyles(colors)
   
   return (
     <div>
-      <h2 style={styles.title}>공사 상세</h2>
-      <p style={styles.desc}>공사 ID: {id}</p>
-      <div style={styles.placeholder}>
-        📋 공사 상세 정보 구현 예정
-      </div>
+      <Title level={4} style={{ marginBottom: 24 }}>
+        <ProfileOutlined /> 공사 상세
+      </Title>
+      <Card style={{ marginBottom: 16 }}>
+        <Descriptions bordered column={1}>
+          <Descriptions.Item label="공사 ID">{id}</Descriptions.Item>
+        </Descriptions>
+      </Card>
+      <Card>
+        <Empty
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+          description={
+            <Text type="secondary">공사 상세 정보 기능 구현 예정</Text>
+          }
+        />
+      </Card>
     </div>
   )
 }
-
-const getStyles = (colors) => ({
-  title: { color: colors.text, fontSize: '1.5rem', marginBottom: '10px' },
-  desc: { color: colors.textSecondary, marginBottom: '30px' },
-  placeholder: {
-    backgroundColor: colors.card,
-    padding: '60px',
-    borderRadius: '12px',
-    textAlign: 'center',
-    color: colors.textMuted,
-    fontSize: '1.2rem',
-    border: `1px solid ${colors.border}`,
-  },
-})
 
 export default ProjectDetail

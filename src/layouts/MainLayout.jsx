@@ -1,27 +1,36 @@
 import { useState } from 'react'
-import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
-import { useTheme } from '../contexts/ThemeContext'
-import SettingsPopup from '../components/SettingsPopup'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { 
+  Layout, Menu, Button, Avatar, Dropdown, Typography, Space, Segmented,
+  DashboardOutlined, FileTextOutlined, ProfileOutlined, AuditOutlined,
+  ProjectOutlined, ContainerOutlined, BarChartOutlined, SettingOutlined,
+  LogoutOutlined, UserOutlined, BankOutlined, ToolOutlined,
+} from '@/lib/antd'
+import { useTheme } from '@/contexts/ThemeContext'
+import SettingsPopup from '@/components/SettingsPopup'
+
+const { Header, Sider, Content } = Layout
+const { Title, Text } = Typography
 
 const menuConfig = {
   accounting: {
     title: '회계관리',
-    icon: '💰',
+    icon: <BankOutlined />,
     items: [
-      { path: '/accounting', label: '대시보드', icon: '📊' },
-      { path: '/accounting/journal', label: '분개장', icon: '📝' },
-      { path: '/accounting/accounts', label: '계정과목', icon: '📋' },
-      { path: '/accounting/vouchers', label: '전표관리', icon: '🧾' },
+      { key: '/accounting', label: '대시보드', icon: <DashboardOutlined /> },
+      { key: '/accounting/journal', label: '분개장', icon: <FileTextOutlined /> },
+      { key: '/accounting/accounts', label: '계정과목', icon: <ProfileOutlined /> },
+      { key: '/accounting/vouchers', label: '전표관리', icon: <AuditOutlined /> },
     ],
   },
   construction: {
     title: '공사관리',
-    icon: '🏗️',
+    icon: <ToolOutlined />,
     items: [
-      { path: '/construction', label: '대시보드', icon: '📊' },
-      { path: '/construction/projects', label: '공사목록', icon: '📁' },
-      { path: '/construction/contracts', label: '계약관리', icon: '📄' },
-      { path: '/construction/progress', label: '기성관리', icon: '📈' },
+      { key: '/construction', label: '대시보드', icon: <DashboardOutlined /> },
+      { key: '/construction/projects', label: '공사목록', icon: <ProjectOutlined /> },
+      { key: '/construction/contracts', label: '계약관리', icon: <ContainerOutlined /> },
+      { key: '/construction/progress', label: '기성관리', icon: <BarChartOutlined /> },
     ],
   },
 }
@@ -31,6 +40,7 @@ function MainLayout({ module }) {
   const navigate = useNavigate()
   const { colors, isDark } = useTheme()
   const [showSettings, setShowSettings] = useState(false)
+  const [collapsed, setCollapsed] = useState(false)
   
   const currentMenu = menuConfig[module]
 
@@ -40,263 +50,133 @@ function MainLayout({ module }) {
     navigate('/login')
   }
 
-  const styles = getStyles(colors)
+  const handleMenuClick = ({ key }) => {
+    navigate(key)
+  }
+
+  const handleModuleChange = (value) => {
+    navigate(`/${value}`)
+  }
+
+  const userMenuItems = [
+    {
+      key: 'settings',
+      label: '설정',
+      icon: <SettingOutlined />,
+      onClick: () => setShowSettings(true),
+    },
+    {
+      type: 'divider',
+    },
+    {
+      key: 'logout',
+      label: '로그아웃',
+      icon: <LogoutOutlined />,
+      danger: true,
+      onClick: handleLogout,
+    },
+  ]
 
   return (
-    <div style={styles.container}>
-      {/* 사이드바 */}
-      <aside style={styles.sidebar}>
-        <div style={styles.logo}>
-          <span style={styles.logoIcon}>🏢</span>
-          <span style={styles.logoText}>ERP System</span>
+    <Layout style={{ minHeight: '100vh' }}>
+      <Sider 
+        collapsible 
+        collapsed={collapsed} 
+        onCollapse={setCollapsed}
+        width={250}
+        style={{
+          borderRight: `1px solid ${colors.border}`,
+        }}
+      >
+        {/* 로고 */}
+        <div style={{ 
+          padding: '20px', 
+          textAlign: 'center',
+          borderBottom: `1px solid ${colors.border}`,
+        }}>
+          <Space>
+            <BankOutlined style={{ fontSize: 24, color: colors.primary }} />
+            {!collapsed && (
+              <Title level={4} style={{ margin: 0, color: colors.text }}>
+                ERP System
+              </Title>
+            )}
+          </Space>
         </div>
 
         {/* 모듈 선택 */}
-        <div style={styles.moduleSelector}>
-          <Link 
-            to="/accounting" 
-            style={{
-              ...styles.moduleBtn,
-              ...(module === 'accounting' ? styles.moduleBtnActive : {})
-            }}
-          >
-            💰 회계
-          </Link>
-          <Link 
-            to="/construction" 
-            style={{
-              ...styles.moduleBtn,
-              ...(module === 'construction' ? styles.moduleBtnActive : {})
-            }}
-          >
-            🏗️ 공사
-          </Link>
-        </div>
-
-        {/* 현재 모듈 메뉴 */}
-        <div style={styles.menuSection}>
-          <h3 style={styles.menuTitle}>
-            {currentMenu.icon} {currentMenu.title}
-          </h3>
-          <nav style={styles.nav}>
-            {currentMenu.items.map((item) => {
-              const isActive = location.pathname === item.path
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  style={{
-                    ...styles.menuItem,
-                    ...(isActive ? styles.menuItemActive : {})
-                  }}
-                >
-                  <span style={styles.menuIcon}>{item.icon}</span>
-                  {item.label}
-                </Link>
-              )
-            })}
-          </nav>
-        </div>
-
-        {/* 하단 */}
-        <div style={styles.sidebarFooter}>
-          <button onClick={handleLogout} style={styles.logoutBtn}>
-            🚪 로그아웃
-          </button>
-        </div>
-      </aside>
-
-      {/* 메인 콘텐츠 */}
-      <div style={styles.main}>
-        {/* 헤더 */}
-        <header style={styles.header}>
-          <h1 style={styles.pageTitle}>
-            {currentMenu.title}
-          </h1>
-          <div 
-            style={styles.userInfo}
-            onClick={() => setShowSettings(true)}
-          >
-            <div style={styles.userAvatar}>👤</div>
-            <div style={styles.userDetails}>
-              <span style={styles.userName}>관리자</span>
-              <span style={styles.userRole}>Administrator</span>
-            </div>
-            <span style={styles.settingsIcon}>⚙️</span>
+        {!collapsed && (
+          <div style={{ padding: '16px' }}>
+            <Segmented
+              block
+              value={module}
+              onChange={handleModuleChange}
+              options={[
+                { label: '회계', value: 'accounting', icon: <BankOutlined /> },
+                { label: '공사', value: 'construction', icon: <ToolOutlined /> },
+              ]}
+            />
           </div>
-        </header>
+        )}
+
+        {/* 메뉴 */}
+        <Menu
+          mode="inline"
+          selectedKeys={[location.pathname]}
+          onClick={handleMenuClick}
+          items={currentMenu.items}
+          style={{ borderRight: 0 }}
+        />
+      </Sider>
+
+      <Layout>
+        {/* 헤더 */}
+        <Header style={{ 
+          padding: '0 24px', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between',
+          borderBottom: `1px solid ${colors.border}`,
+        }}>
+          <Title level={4} style={{ margin: 0, color: colors.text }}>
+            {currentMenu.icon} {currentMenu.title}
+          </Title>
+
+          <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
+            <Space style={{ cursor: 'pointer' }}>
+              <Avatar 
+                icon={<UserOutlined />} 
+                style={{ backgroundColor: colors.primary }}
+              />
+              <div style={{ lineHeight: 1.2 }}>
+                <Text strong style={{ display: 'block', color: colors.text }}>관리자</Text>
+                <Text type="secondary" style={{ fontSize: 12 }}>Administrator</Text>
+              </div>
+              <SettingOutlined style={{ color: colors.textSecondary }} />
+            </Space>
+          </Dropdown>
+        </Header>
 
         {/* 콘텐츠 영역 */}
-        <main style={styles.content}>
+        <Content style={{ 
+          margin: '24px', 
+          padding: '24px',
+          background: colors.card,
+          borderRadius: 8,
+          minHeight: 280,
+          overflow: 'auto',
+        }}>
           <Outlet />
-        </main>
-      </div>
+        </Content>
+      </Layout>
 
       {/* 설정 팝업 */}
       <SettingsPopup 
         isOpen={showSettings} 
         onClose={() => setShowSettings(false)} 
       />
-    </div>
+    </Layout>
   )
 }
-
-const getStyles = (colors) => ({
-  container: {
-    display: 'flex',
-    minHeight: '100vh',
-    backgroundColor: colors.background,
-  },
-  sidebar: {
-    width: '250px',
-    backgroundColor: colors.sidebar,
-    display: 'flex',
-    flexDirection: 'column',
-    borderRight: `1px solid ${colors.border}`,
-  },
-  logo: {
-    padding: '20px',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    borderBottom: `1px solid ${colors.border}`,
-  },
-  logoIcon: {
-    fontSize: '1.5rem',
-  },
-  logoText: {
-    color: colors.text,
-    fontSize: '1.2rem',
-    fontWeight: 'bold',
-  },
-  moduleSelector: {
-    display: 'flex',
-    padding: '15px',
-    gap: '10px',
-  },
-  moduleBtn: {
-    flex: 1,
-    padding: '10px',
-    borderRadius: '8px',
-    backgroundColor: colors.background,
-    color: colors.textSecondary,
-    textDecoration: 'none',
-    textAlign: 'center',
-    fontSize: '0.85rem',
-    transition: 'all 0.2s',
-  },
-  moduleBtnActive: {
-    backgroundColor: colors.primary,
-    color: '#fff',
-  },
-  menuSection: {
-    flex: 1,
-    padding: '10px 15px',
-  },
-  menuTitle: {
-    color: colors.textSecondary,
-    fontSize: '0.8rem',
-    textTransform: 'uppercase',
-    marginBottom: '15px',
-    paddingLeft: '10px',
-  },
-  nav: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '5px',
-  },
-  menuItem: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    padding: '12px 15px',
-    borderRadius: '8px',
-    color: colors.textSecondary,
-    textDecoration: 'none',
-    fontSize: '0.95rem',
-    transition: 'all 0.2s',
-  },
-  menuItemActive: {
-    backgroundColor: colors.primary,
-    color: '#fff',
-  },
-  menuIcon: {
-    fontSize: '1.1rem',
-  },
-  sidebarFooter: {
-    padding: '15px',
-    borderTop: `1px solid ${colors.border}`,
-  },
-  logoutBtn: {
-    width: '100%',
-    padding: '12px',
-    borderRadius: '8px',
-    border: 'none',
-    backgroundColor: colors.background,
-    color: colors.textSecondary,
-    cursor: 'pointer',
-    fontSize: '0.9rem',
-  },
-  main: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '15px 30px',
-    backgroundColor: colors.sidebar,
-    borderBottom: `1px solid ${colors.border}`,
-  },
-  pageTitle: {
-    color: colors.text,
-    fontSize: '1.3rem',
-    fontWeight: '600',
-  },
-  userInfo: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    padding: '8px 15px',
-    borderRadius: '10px',
-    cursor: 'pointer',
-    transition: 'background-color 0.2s',
-    backgroundColor: 'transparent',
-  },
-  userAvatar: {
-    width: '40px',
-    height: '40px',
-    borderRadius: '50%',
-    backgroundColor: colors.primary,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '1.2rem',
-  },
-  userDetails: {
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  userName: {
-    color: colors.text,
-    fontSize: '0.95rem',
-    fontWeight: '600',
-  },
-  userRole: {
-    color: colors.textSecondary,
-    fontSize: '0.75rem',
-  },
-  settingsIcon: {
-    fontSize: '1.2rem',
-    color: colors.textSecondary,
-  },
-  content: {
-    flex: 1,
-    padding: '30px',
-    overflowY: 'auto',
-  },
-})
 
 export default MainLayout

@@ -1,6 +1,12 @@
 import { useNavigate } from 'react-router-dom'
 import { useEffect } from 'react'
-import { useTheme } from '../contexts/ThemeContext'
+import { 
+  Card, Row, Col, Typography, Space,
+  BankOutlined, ToolOutlined,
+} from '@/lib/antd'
+import { useTheme } from '@/contexts/ThemeContext'
+
+const { Title, Text } = Typography
 
 function Home() {
   const navigate = useNavigate()
@@ -13,90 +19,62 @@ function Home() {
     }
   }, [navigate])
 
-  const styles = getStyles(colors)
+  const modules = [
+    {
+      key: 'accounting',
+      title: '회계관리',
+      desc: '분개, 계정과목, 전표관리',
+      icon: <BankOutlined style={{ fontSize: 48, color: colors.primary }} />,
+      path: '/accounting',
+    },
+    {
+      key: 'construction',
+      title: '공사관리',
+      desc: '공사, 계약, 기성관리',
+      icon: <ToolOutlined style={{ fontSize: 48, color: colors.primary }} />,
+      path: '/construction',
+    },
+  ]
 
   return (
-    <div style={styles.container}>
-      <h1 style={styles.title}>🏢 ERP System</h1>
-      <p style={styles.subtitle}>모듈을 선택하세요</p>
-      
-      <div style={styles.cards}>
-        <div 
-          style={styles.card} 
-          onClick={() => navigate('/accounting')}
-          onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
-          onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-        >
-          <span style={styles.cardIcon}>💰</span>
-          <h2 style={styles.cardTitle}>회계관리</h2>
-          <p style={styles.cardDesc}>분개, 계정과목, 전표관리</p>
-        </div>
-        
-        <div 
-          style={styles.card} 
-          onClick={() => navigate('/construction')}
-          onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
-          onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-        >
-          <span style={styles.cardIcon}>🏗️</span>
-          <h2 style={styles.cardTitle}>공사관리</h2>
-          <p style={styles.cardDesc}>공사, 계약, 기성관리</p>
-        </div>
-      </div>
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.background,
+      padding: 24,
+    }}>
+      <Space direction="vertical" align="center" size="large" style={{ marginBottom: 48 }}>
+        <BankOutlined style={{ fontSize: 64, color: colors.primary }} />
+        <Title level={1} style={{ margin: 0 }}>ERP System</Title>
+        <Text type="secondary" style={{ fontSize: 16 }}>모듈을 선택하세요</Text>
+      </Space>
+
+      <Row gutter={24}>
+        {modules.map((module) => (
+          <Col key={module.key}>
+            <Card
+              hoverable
+              onClick={() => navigate(module.path)}
+              style={{ 
+                width: 280, 
+                textAlign: 'center',
+                borderRadius: 16,
+              }}
+            >
+              <Space direction="vertical" size="middle">
+                {module.icon}
+                <Title level={3} style={{ margin: 0 }}>{module.title}</Title>
+                <Text type="secondary">{module.desc}</Text>
+              </Space>
+            </Card>
+          </Col>
+        ))}
+      </Row>
     </div>
   )
 }
-
-const getStyles = (colors) => ({
-  container: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: '100vh',
-    backgroundColor: colors.background,
-    padding: '20px',
-  },
-  title: {
-    color: colors.text,
-    fontSize: '2.5rem',
-    marginBottom: '10px',
-  },
-  subtitle: {
-    color: colors.textSecondary,
-    fontSize: '1.1rem',
-    marginBottom: '40px',
-  },
-  cards: {
-    display: 'flex',
-    gap: '30px',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-  },
-  card: {
-    backgroundColor: colors.card,
-    padding: '40px',
-    borderRadius: '16px',
-    width: '250px',
-    textAlign: 'center',
-    cursor: 'pointer',
-    transition: 'transform 0.2s, box-shadow 0.2s',
-    border: `1px solid ${colors.border}`,
-  },
-  cardIcon: {
-    fontSize: '3rem',
-    display: 'block',
-    marginBottom: '15px',
-  },
-  cardTitle: {
-    color: colors.text,
-    fontSize: '1.3rem',
-    marginBottom: '10px',
-  },
-  cardDesc: {
-    color: colors.textSecondary,
-    fontSize: '0.9rem',
-  },
-})
 
 export default Home
