@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { 
-  DataTable, SearchForm, SearchButtons, PageHeader, StatCard, StatusTag,
-  Form, Select, DatePicker, Row, Col, Card, Typography,
+  SearchForm, SearchButtons, PageHeader, StatCard, IBSheetGrid,
+  Form, Select, DatePicker, Row, Col, Card,
   FileTextOutlined 
 } from '@/components/ui'
 import dayjs from 'dayjs'
@@ -10,7 +10,6 @@ import isBetween from 'dayjs/plugin/isBetween'
 dayjs.extend(isBetween)
 
 const { RangePicker } = DatePicker
-const { Text } = Typography
 
 // 샘플 데이터
 const sampleVouchers = [
@@ -32,10 +31,34 @@ const departments = [
   { value: '인사팀', label: '인사팀' },
 ]
 
+// IBSheet 설정
+const sheetConfig = {
+  Cfg: {
+    SearchMode: 2,  // 서버 조회 모드
+    CanEdit: 1,     // 편집 불가
+    HeaderMerge: 3,
+  },
+  Cols: [
+    { Header: '전표번호', Name: 'id', Type: 'Text', Width: 130, Align: 'Center' },
+    { Header: '발행일자', Name: 'date', Type: 'Date', Width: 120, Align: 'Center', Format: 'yyyy-MM-dd' },
+    { Header: '발행부서', Name: 'dept', Type: 'Text', Width: 120, Align: 'Center' },
+    { Header: '적요', Name: 'desc', Type: 'Text', Width: 250, Align: 'Left' },
+    { Header: '금액', Name: 'amount', Type: 'Int', Width: 140, Align: 'Right', Format: '#,###원' },
+    { 
+      Header: '상태', 
+      Name: 'status', 
+      Type: 'Text', 
+      Width: 100, 
+      Align: 'Center',
+    },
+  ],
+}
+
 function VoucherList() {
   const [form] = Form.useForm()
   const [selectedDept, setSelectedDept] = useState('전체')
   const [dateRange, setDateRange] = useState([dayjs('2026-01-01'), dayjs('2026-01-31')])
+  const sheetRef = useRef(null)
 
   // 필터링된 전표 목록
   const filteredVouchers = sampleVouchers.filter(voucher => {
@@ -50,6 +73,10 @@ function VoucherList() {
 
   const handleSearch = () => {
     console.log('조회:', { selectedDept, dateRange })
+    // IBSheet 데이터 로드
+    if (sheetRef.current) {
+      sheetRef.current.loadSearchData({ data: filteredVouchers })
+    }
   }
 
   const handleReset = () => {
@@ -58,60 +85,11 @@ function VoucherList() {
     setDateRange([dayjs('2026-01-01'), dayjs('2026-01-31')])
   }
 
-  // 테이블 컬럼 정의
-  const columns = [
-    {
-      title: '전표번호',
-      dataIndex: 'id',
-      key: 'id',
-      width: 130,
-      render: (text) => <Text strong>{text}</Text>,
-    },
-    {
-      title: '발행일자',
-      dataIndex: 'date',
-      key: 'date',
-      width: 120,
-      sorter: (a, b) => dayjs(a.date).unix() - dayjs(b.date).unix(),
-    },
-    {
-      title: '발행부서',
-      dataIndex: 'dept',
-      key: 'dept',
-      width: 120,
-      filters: departments.filter(d => d.value !== '전체').map(d => ({ text: d.label, value: d.value })),
-      onFilter: (value, record) => record.dept === value,
-    },
-    {
-      title: '적요',
-      dataIndex: 'desc',
-      key: 'desc',
-      ellipsis: true,
-    },
-    {
-      title: '금액',
-      dataIndex: 'amount',
-      key: 'amount',
-      width: 140,
-      align: 'right',
-      sorter: (a, b) => a.amount - b.amount,
-      render: (amount) => <Text strong>₩ {amount.toLocaleString()}</Text>,
-    },
-    {
-      title: '상태',
-      dataIndex: 'status',
-      key: 'status',
-      width: 100,
-      align: 'center',
-      filters: [
-        { text: '승인', value: '승인' },
-        { text: '대기', value: '대기' },
-        { text: '반려', value: '반려' },
-      ],
-      onFilter: (value, record) => record.status === value,
-      render: (status) => <StatusTag status={status} />,
-    },
-  ]
+  // 시트 렌더링 완료 핸들러
+  const handleSheetRenderFinish = (sheet) => {
+    console.log('IBSheet 렌더링 완료')
+    sheetRef.current = sheet
+  }
 
   return (
     <div>
@@ -172,9 +150,15 @@ function VoucherList() {
         </Col>
       </Row>
 
-      {/* 전표 목록 테이블 */}
+      {/* 전표 목록 - IBSheet */}
       <Card>
-        <DataTable columns={columns} data={filteredVouchers} />
+        <IBSheetGrid
+          id="voucherSheet"
+          config={sheetConfig}
+          data={filteredVouchers}
+          height={400}
+          onRenderFinish={handleSheetRenderFinish}
+        />
       </Card>
     </div>
   )

@@ -9,6 +9,7 @@
 export { default as DataTable } from './DataTable'
 export { default as SearchForm, SearchButtons, Form } from './SearchForm'
 export { default as PageHeader } from './PageHeader'
+export { default as IBSheetGrid } from './IBSheetGrid'
 export { default as StatCard } from './StatCard'
 export { default as StatusTag } from './StatusTag'
 
