@@ -5,6 +5,7 @@ const Dashboard = lazy(() => import('../pages/accounting/Dashboard'))
 const JournalEntry = lazy(() => import('../pages/accounting/JournalEntry'))
 const AccountList = lazy(() => import('../pages/accounting/AccountList'))
 const VoucherList = lazy(() => import('../pages/accounting/VoucherList'))
+const ClosingStatus = lazy(() => import('../pages/accounting/ClosingStatus'))
 
 const accountingRoutes = [
   {
@@ -15,6 +16,7 @@ const accountingRoutes = [
       { path: 'journal', element: <JournalEntry /> },
       { path: 'accounts', element: <AccountList /> },
       { path: 'vouchers', element: <VoucherList /> },
+      { path: 'closing', element: <ClosingStatus /> },
     ],
   },
 ]

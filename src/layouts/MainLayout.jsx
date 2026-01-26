@@ -4,7 +4,7 @@ import {
   Layout, Menu, Button, Avatar, Dropdown, Typography, Space, Segmented,
   DashboardOutlined, FileTextOutlined, ProfileOutlined, AuditOutlined,
   ProjectOutlined, ContainerOutlined, BarChartOutlined, SettingOutlined,
-  LogoutOutlined, UserOutlined, BankOutlined, ToolOutlined,
+  LogoutOutlined, UserOutlined, BankOutlined, ToolOutlined, CheckCircleOutlined,
 } from '@/lib/antd'
 import { useTheme } from '@/contexts/ThemeContext'
 import SettingsPopup from '@/components/SettingsPopup'
@@ -21,6 +21,7 @@ const menuConfig = {
       { key: '/accounting/journal', label: '분개장', icon: <FileTextOutlined /> },
       { key: '/accounting/accounts', label: '계정과목', icon: <ProfileOutlined /> },
       { key: '/accounting/vouchers', label: '전표관리', icon: <AuditOutlined /> },
+      { key: '/accounting/closing', label: '마감현황', icon: <CheckCircleOutlined /> },
     ],
   },
   construction: {
