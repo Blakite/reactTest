@@ -1,16 +1,31 @@
-import { useState } from 'react'
-import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { useState, Suspense } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { 
-  Layout, Menu, Button, Avatar, Dropdown, Typography, Space, Segmented,
+  Layout, Menu, Avatar, Dropdown, Typography, Space, Segmented, Tabs, Spin,
   DashboardOutlined, FileTextOutlined, ProfileOutlined, AuditOutlined,
   ProjectOutlined, ContainerOutlined, BarChartOutlined, SettingOutlined,
   LogoutOutlined, UserOutlined, BankOutlined, ToolOutlined, CheckCircleOutlined,
 } from '@/lib/antd'
 import { useTheme } from '@/contexts/ThemeContext'
+import { useTab } from '@/contexts/TabContext'
 import SettingsPopup from '@/components/SettingsPopup'
+import { componentRegistry } from '@/routes'
 
 const { Header, Sider, Content } = Layout
 const { Title, Text } = Typography
+
+// 메뉴 아이콘 매핑
+const menuIcons = {
+  '/accounting': <DashboardOutlined />,
+  '/accounting/journal': <FileTextOutlined />,
+  '/accounting/accounts': <ProfileOutlined />,
+  '/accounting/vouchers': <AuditOutlined />,
+  '/accounting/closing': <CheckCircleOutlined />,
+  '/construction': <DashboardOutlined />,
+  '/construction/projects': <ProjectOutlined />,
+  '/construction/contracts': <ContainerOutlined />,
+  '/construction/progress': <BarChartOutlined />,
+}
 
 const menuConfig = {
   accounting: {
@@ -36,10 +51,23 @@ const menuConfig = {
   },
 }
 
+// 탭 컨텐츠 래퍼 (탭별로 컴포넌트 유지)
+function TabContent({ tabKey, component: Component }) {
+  return (
+    <Suspense fallback={
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 300 }}>
+        <Spin size="large" />
+      </div>
+    }>
+      <Component tabKey={tabKey} />
+    </Suspense>
+  )
+}
+
 function MainLayout({ module }) {
-  const location = useLocation()
   const navigate = useNavigate()
-  const { colors, isDark } = useTheme()
+  const { colors } = useTheme()
+  const { tabs, activeKey, addTab, removeTab, setActiveTab } = useTab()
   const [showSettings, setShowSettings] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
   
@@ -51,12 +79,35 @@ function MainLayout({ module }) {
     navigate('/login')
   }
 
+  // 메뉴 클릭 시 탭 추가
   const handleMenuClick = ({ key }) => {
-    navigate(key)
+    const menuItem = currentMenu.items.find(item => item.key === key)
+    if (menuItem && componentRegistry[key]) {
+      addTab({
+        key: key,
+        label: menuItem.label,
+        path: key,
+        module: module,
+        component: componentRegistry[key],
+      })
+    }
   }
 
+  // 모듈 변경
   const handleModuleChange = (value) => {
     navigate(`/${value}`)
+  }
+
+  // 탭 편집 (닫기)
+  const handleTabEdit = (targetKey, action) => {
+    if (action === 'remove') {
+      removeTab(targetKey)
+    }
+  }
+
+  // 탭 변경
+  const handleTabChange = (key) => {
+    setActiveTab(key)
   }
 
   const userMenuItems = [
@@ -77,6 +128,25 @@ function MainLayout({ module }) {
       onClick: handleLogout,
     },
   ]
+
+  // 탭 아이템 생성
+  const tabItems = tabs
+    .filter(tab => tab.module === module)
+    .map(tab => ({
+      key: tab.key,
+      label: (
+        <span>
+          {menuIcons[tab.key]} {tab.label}
+        </span>
+      ),
+      children: (
+        <TabContent 
+          tabKey={tab.key} 
+          component={tab.component} 
+        />
+      ),
+      closable: true,
+    }))
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -123,7 +193,7 @@ function MainLayout({ module }) {
         {/* 메뉴 */}
         <Menu
           mode="inline"
-          selectedKeys={[location.pathname]}
+          selectedKeys={activeKey ? [activeKey] : []}
           onClick={handleMenuClick}
           items={currentMenu.items}
           style={{ borderRight: 0 }}
@@ -158,16 +228,46 @@ function MainLayout({ module }) {
           </Dropdown>
         </Header>
 
-        {/* 콘텐츠 영역 */}
+        {/* 탭 콘텐츠 영역 */}
         <Content style={{ 
-          margin: '24px', 
-          padding: '24px',
+          margin: '0', 
+          padding: '0',
           background: colors.card,
-          borderRadius: 8,
           minHeight: 280,
           overflow: 'auto',
         }}>
-          <Outlet />
+          {tabItems.length > 0 ? (
+            <Tabs
+              type="editable-card"
+              hideAdd
+              destroyInactiveTabPane={false}
+              activeKey={activeKey}
+              onChange={handleTabChange}
+              onEdit={handleTabEdit}
+              items={tabItems}
+              style={{ 
+                height: '100%',
+                padding: '8px 16px 0 16px',
+              }}
+              tabBarStyle={{
+                marginBottom: 0,
+              }}
+            />
+          ) : (
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center', 
+              height: '100%',
+              minHeight: 400,
+              color: colors.textSecondary,
+              flexDirection: 'column',
+              gap: 16,
+            }}>
+              <DashboardOutlined style={{ fontSize: 48, opacity: 0.5 }} />
+              <Text type="secondary">왼쪽 메뉴에서 화면을 선택하세요</Text>
+            </div>
+          )}
         </Content>
       </Layout>
 

@@ -46,6 +46,7 @@ export {
   message,
   Tabs,
   Dropdown,
+  Spin,
 } from 'antd'
 
 // Navigation

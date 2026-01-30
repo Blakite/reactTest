@@ -6,6 +6,7 @@ import {
 } from '@/components/ui'
 import { Spin, message } from 'antd'
 import dayjs from 'dayjs'
+import ibsheetManager from '@/utils/ibsheetManager'
 
 // 디폴트 마감년월 계산 (10일 이전이면 지난달, 이후면 이번달)
 const getDefaultClosingMonth = () => {
@@ -58,7 +59,7 @@ const sheetConfig = {
   ],
 }
 
-function ClosingStatus() {
+function ClosingStatus({ tabKey }) {
   const [form] = Form.useForm()
   const [selectedCorp, setSelectedCorp] = useState('전체')
   const [selectedDept, setSelectedDept] = useState('전체')
@@ -69,6 +70,7 @@ function ClosingStatus() {
   const [isSheetReady, setIsSheetReady] = useState(false)
   const sheetRef = useRef(null)
   const containerRef = useRef(null)
+  const isCreatingRef = useRef(false)  // 생성 "시작" 여부
   const sheetId = 'closingSheet'
 
   // IBSheet Loader로 동적 로드
@@ -94,12 +96,12 @@ function ClosingStatus() {
         
         if (isMounted) {
           setIsLoading(false)
-          console.log('IBSheet Loader: 로드 완료')
+          console.log('[IBSheet Loader] 로드 완료')
         }
       } catch (error) {
-        console.error('IBSheet Loader 오류:', error)
-        message.error('IBSheet 로드에 실패했습니다.')
+        console.error('[IBSheet Loader] 오류:', error)
         if (isMounted) {
+          message.error('IBSheet 로드에 실패했습니다.')
           setIsLoading(false)
         }
       }
@@ -114,17 +116,19 @@ function ClosingStatus() {
 
   // IBSheet 생성
   useEffect(() => {
+    // 이미 생성 시작했으면 스킵 (StrictMode 대응)
+    if (isCreatingRef.current) {
+      console.log(`[IBSheet Loader] Already creating, skipping: ${sheetId}`)
+      return
+    }
+
     if (isLoading || !containerRef.current || !window.IBSheet) return
+
+    // 생성 시작 표시 (비동기 호출 전에!)
+    isCreatingRef.current = true
 
     const createSheet = async () => {
       try {
-        // 기존 시트 제거
-        try {
-          if (window.IBSheet.getSheetById(sheetId)) {
-            window.IBSheet.disposeById(sheetId)
-          }
-        } catch (e) {}
-
         const sheet = await window.IBSheet.create({
           id: sheetId,
           el: containerRef.current,
@@ -133,29 +137,26 @@ function ClosingStatus() {
             Cfg: {
               ...sheetConfig.Cfg,
               FitWidth: 1,
+              Language: 'ko',
             },
           },
           data: { data: getFilteredData() },
+          locale: 'ko',
         })
 
         sheetRef.current = sheet
+        ibsheetManager.register(sheetId, tabKey)
         setIsSheetReady(true)
-        console.log('IBSheet 생성 완료 (Loader 방식)')
+        console.log(`[IBSheet Loader] Created: ${sheetId} (tab: ${tabKey})`)
       } catch (error) {
-        console.error('IBSheet 생성 오류:', error)
+        console.error('[IBSheet Loader] 생성 오류:', error)
+        isCreatingRef.current = false  // 에러 시 다시 시도 가능
       }
     }
 
     createSheet()
 
-    return () => {
-      if (window.IBSheet) {
-        try {
-          window.IBSheet.disposeById(sheetId)
-        } catch (e) {}
-      }
-      sheetRef.current = null
-    }
+    return () => {}
   }, [isLoading])
 
   // 필터링된 데이터 가져오기

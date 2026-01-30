@@ -54,7 +54,7 @@ const sheetConfig = {
   ],
 }
 
-function VoucherList() {
+function VoucherList({ tabKey }) {
   const [form] = Form.useForm()
   const [selectedDept, setSelectedDept] = useState('전체')
   const [dateRange, setDateRange] = useState([dayjs('2026-01-01'), dayjs('2026-01-31')])
@@ -154,6 +154,7 @@ function VoucherList() {
       <Card>
         <IBSheetGrid
           id="voucherSheet"
+          tabKey={tabKey}
           config={sheetConfig}
           data={filteredVouchers}
           height={400}

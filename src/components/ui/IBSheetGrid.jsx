@@ -1,11 +1,14 @@
 /**
  * IBSheetGrid - IBSheet8 래퍼 컴포넌트
- * window.IBSheet를 직접 사용
+ * 
+ * MDI 탭 환경에서 안전하게 동작
  */
 import { useEffect, useRef } from 'react'
+import ibsheetManager from '@/utils/ibsheetManager'
 
 export default function IBSheetGrid({ 
   id, 
+  tabKey,  // 소속 탭 키 (MDI용)
   config, 
   data,
   height = 400,
@@ -14,26 +17,24 @@ export default function IBSheetGrid({
 }) {
   const containerRef = useRef(null)
   const sheetRef = useRef(null)
-  const isCreating = useRef(false)
+  const isCreatingRef = useRef(false)
 
+  // IBSheet 생성
   useEffect(() => {
-    // IBSheet 생성
+    // 이미 생성 시작했으면 스킵 (StrictMode 대응)
+    if (isCreatingRef.current) {
+      console.log(`[IBSheetGrid] Already creating, skipping: ${id}`)
+      return
+    }
+
+    if (!window.IBSheet || !containerRef.current) {
+      return
+    }
+
+    // 생성 시작 표시 (비동기 호출 전에!)
+    isCreatingRef.current = true
+
     const createSheet = async () => {
-      if (!window.IBSheet || !containerRef.current || isCreating.current) {
-        return
-      }
-
-      // 이미 존재하는 시트가 있으면 제거
-      try {
-        if (window.IBSheet.getSheetById(id)) {
-          window.IBSheet.disposeById(id)
-        }
-      } catch (e) {
-        // 시트가 없으면 무시
-      }
-
-      isCreating.current = true
-
       const options = {
         ...config,
         Cfg: {
@@ -53,39 +54,40 @@ export default function IBSheetGrid({
         })
         
         sheetRef.current = sheet
-        isCreating.current = false
+        ibsheetManager.register(id, tabKey)
+        console.log(`[IBSheetGrid] Created: ${id} (tab: ${tabKey})`)
         
         if (onRenderFinish) {
           onRenderFinish(sheet)
         }
       } catch (e) {
-        console.error('IBSheet 생성 오류:', e)
-        isCreating.current = false
+        console.error(`[IBSheetGrid] Create error (${id}):`, e)
+        isCreatingRef.current = false
       }
     }
 
     createSheet()
 
-    // Cleanup
     return () => {
-      isCreating.current = false
-      if (window.IBSheet) {
-        try {
-          window.IBSheet.disposeById(id)
-        } catch (e) {
-          // 무시
-        }
+      // 컴포넌트 언마운트 시 시트 정리
+      if (sheetRef.current) {
+        ibsheetManager.dispose(id)
         sheetRef.current = null
+        isCreatingRef.current = false
       }
     }
-  }, [id])
+  }, [id, tabKey])
 
   // 데이터 변경 시 리로드
   useEffect(() => {
     if (sheetRef.current && data) {
-      sheetRef.current.loadSearchData({ data: data })
+      try {
+        sheetRef.current.loadSearchData({ data: data })
+      } catch (e) {
+        console.error(`[IBSheetGrid] Load data error (${id}):`, e)
+      }
     }
-  }, [data])
+  }, [data, id])
 
   return (
     <div 
