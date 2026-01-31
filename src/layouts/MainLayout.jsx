@@ -1,14 +1,13 @@
 import { useState, Suspense, lazy } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { 
-  Layout, Menu, Avatar, Dropdown, Typography, Space, Segmented, Tabs, Spin,
-  SettingOutlined, LogoutOutlined, UserOutlined, BankOutlined, ToolOutlined,
+  Layout, Menu, Avatar, Dropdown, Typography, Space, Tabs, Spin, Tooltip,
+  SettingOutlined, LogoutOutlined, UserOutlined, BankOutlined,
 } from '@/lib/antd'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useTab } from '@/contexts/TabContext'
 import { useMenu } from '@/contexts/MenuContext'
 import SettingsPopup from '@/components/SettingsPopup'
-import { getIcon } from '@/utils/iconMapping'
 
 const { Header, Sider, Content } = Layout
 const { Title, Text } = Typography
@@ -27,7 +26,6 @@ function loadComponent(componentPath) {
     
     if (!importFn) {
       console.error(`[MainLayout] Component not found: ${modulePath}`)
-      // 폴백: 빈 컴포넌트 반환
       componentCache[componentPath] = lazy(() => 
         Promise.resolve({ default: () => <div>페이지를 찾을 수 없습니다: {componentPath}</div> })
       )
@@ -56,9 +54,8 @@ function MainLayout({ module }) {
   const navigate = useNavigate()
   const { colors } = useTheme()
   const { tabs, activeKey, addTab, removeTab, setActiveTab } = useTab()
-  const { user, modules, getMenusByModule, getModulesWithIcons, isLoading: menuLoading, clearMenus } = useMenu()
+  const { user, getMenusByModule, getModulesWithIcons, isLoading: menuLoading, clearMenus } = useMenu()
   const [showSettings, setShowSettings] = useState(false)
-  const [collapsed, setCollapsed] = useState(false)
   
   // 현재 모듈의 메뉴 가져오기
   const currentMenuItems = getMenusByModule(module)
@@ -91,8 +88,8 @@ function MainLayout({ module }) {
   }
 
   // 모듈 변경
-  const handleModuleChange = (value) => {
-    navigate(`/${value}`)
+  const handleModuleChange = (moduleId) => {
+    navigate(`/${moduleId}`)
   }
 
   // 탭 편집 (닫기)
@@ -114,9 +111,7 @@ function MainLayout({ module }) {
       icon: <SettingOutlined />,
       onClick: () => setShowSettings(true),
     },
-    {
-      type: 'divider',
-    },
+    { type: 'divider' },
     {
       key: 'logout',
       label: '로그아웃',
@@ -131,13 +126,6 @@ function MainLayout({ module }) {
     key: item.key,
     label: item.label,
     icon: item.icon,
-  }))
-
-  // 모듈 선택 옵션
-  const moduleOptions = modulesWithIcons.map(mod => ({
-    label: mod.name.replace('관리', ''),  // '회계관리' -> '회계'
-    value: mod.id,
-    icon: mod.icon,
   }))
 
   // 탭 아이템 생성
@@ -175,64 +163,154 @@ function MainLayout({ module }) {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
+      {/* ========== 모듈 아이콘 레일 (좌측 첫번째) ========== */}
       <Sider 
-        collapsible 
-        collapsed={collapsed} 
-        onCollapse={setCollapsed}
-        width={250}
+        width={64}
         style={{
-          borderRight: `1px solid ${colors.border}`,
+          background: colors.primary,
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
         {/* 로고 */}
         <div style={{ 
-          padding: '20px', 
-          textAlign: 'center',
+          height: 64,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderBottom: '1px solid rgba(255,255,255,0.1)',
+        }}>
+          <BankOutlined style={{ fontSize: 28, color: '#fff' }} />
+        </div>
+
+        {/* 모듈 아이콘 목록 */}
+        <div style={{ 
+          flex: 1, 
+          overflowY: 'auto',
+          padding: '8px 0',
+        }}>
+          {modulesWithIcons.map(mod => (
+            <Tooltip key={mod.id} title={mod.name} placement="right">
+              <div
+                onClick={() => handleModuleChange(mod.id)}
+                style={{
+                  width: 48,
+                  height: 48,
+                  margin: '4px auto',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                  fontSize: 22,
+                  color: mod.id === module ? '#fff' : 'rgba(255,255,255,0.65)',
+                  background: mod.id === module ? 'rgba(255,255,255,0.2)' : 'transparent',
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  if (mod.id !== module) {
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.1)'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (mod.id !== module) {
+                    e.currentTarget.style.background = 'transparent'
+                  }
+                }}
+              >
+                {mod.icon}
+              </div>
+            </Tooltip>
+          ))}
+        </div>
+
+        {/* 하단 설정 아이콘 */}
+        <div style={{
+          borderTop: '1px solid rgba(255,255,255,0.1)',
+          padding: '12px 0',
+        }}>
+          <Tooltip title="설정" placement="right">
+            <div
+              onClick={() => setShowSettings(true)}
+              style={{
+                width: 48,
+                height: 48,
+                margin: '0 auto',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: 8,
+                cursor: 'pointer',
+                fontSize: 20,
+                color: 'rgba(255,255,255,0.65)',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255,255,255,0.1)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent'
+              }}
+            >
+              <SettingOutlined />
+            </div>
+          </Tooltip>
+        </div>
+      </Sider>
+
+      {/* ========== 세부 메뉴 사이드바 (좌측 두번째) ========== */}
+      <Sider 
+        width={200}
+        style={{
+          background: colors.card,
+          borderRight: `1px solid ${colors.border}`,
+        }}
+      >
+        {/* 모듈 타이틀 */}
+        <div style={{ 
+          height: 64,
+          padding: '0 16px',
+          display: 'flex',
+          alignItems: 'center',
           borderBottom: `1px solid ${colors.border}`,
         }}>
           <Space>
-            <BankOutlined style={{ fontSize: 24, color: colors.primary }} />
-            {!collapsed && (
-              <Title level={4} style={{ margin: 0, color: colors.text }}>
-                ERP System
-              </Title>
-            )}
+            <span style={{ fontSize: 20, color: colors.primary }}>
+              {currentModule?.icon}
+            </span>
+            <Title level={5} style={{ margin: 0, color: colors.text }}>
+              {currentModule?.name || '모듈'}
+            </Title>
           </Space>
         </div>
 
-        {/* 모듈 선택 */}
-        {!collapsed && moduleOptions.length > 1 && (
-          <div style={{ padding: '16px' }}>
-            <Segmented
-              block
-              value={module}
-              onChange={handleModuleChange}
-              options={moduleOptions}
-            />
-          </div>
-        )}
-
-        {/* 메뉴 */}
+        {/* 메뉴 목록 */}
         <Menu
           mode="inline"
           selectedKeys={activeKey ? [activeKey] : []}
           onClick={handleMenuClick}
           items={menuItemsForAntd}
-          style={{ borderRight: 0 }}
+          style={{ 
+            borderRight: 0,
+            background: 'transparent',
+          }}
         />
       </Sider>
 
+      {/* ========== 메인 콘텐츠 영역 ========== */}
       <Layout>
         {/* 헤더 */}
         <Header style={{ 
+          height: 64,
           padding: '0 24px', 
           display: 'flex', 
           alignItems: 'center', 
           justifyContent: 'space-between',
           borderBottom: `1px solid ${colors.border}`,
+          background: colors.card,
         }}>
           <Title level={4} style={{ margin: 0, color: colors.text }}>
-            {currentModule?.icon} {currentModule?.name || module}
+            ERP System
           </Title>
 
           <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
@@ -249,7 +327,6 @@ function MainLayout({ module }) {
                   {user?.role || 'User'}
                 </Text>
               </div>
-              <SettingOutlined style={{ color: colors.textSecondary }} />
             </Space>
           </Dropdown>
         </Header>
@@ -258,7 +335,7 @@ function MainLayout({ module }) {
         <Content style={{ 
           margin: '0', 
           padding: '0',
-          background: colors.card,
+          background: colors.background,
           minHeight: 280,
           overflow: 'auto',
         }}>
@@ -290,7 +367,9 @@ function MainLayout({ module }) {
               flexDirection: 'column',
               gap: 16,
             }}>
-              {currentModule?.icon || <BankOutlined style={{ fontSize: 48, opacity: 0.5 }} />}
+              <span style={{ fontSize: 48, opacity: 0.3 }}>
+                {currentModule?.icon || <BankOutlined />}
+              </span>
               <Text type="secondary">왼쪽 메뉴에서 화면을 선택하세요</Text>
             </div>
           )}

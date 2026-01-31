@@ -47,6 +47,7 @@ export {
   Tabs,
   Dropdown,
   Spin,
+  Tooltip,
 } from 'antd'
 
 // Navigation
