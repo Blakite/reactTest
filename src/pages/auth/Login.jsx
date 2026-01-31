@@ -1,24 +1,67 @@
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { 
-  Form, Input, Button, Card, Typography, Row, Col, message,
+  Form, Input, Button, Card, Typography, Row, Col, message, Select,
   UserOutlined, LockOutlined, BankOutlined,
 } from '@/lib/antd'
 import { useTheme } from '@/contexts/ThemeContext'
+import { useMenu } from '@/contexts/MenuContext'
+import { fetchUsers } from '@/services/api'
 
 const { Title, Text, Paragraph } = Typography
 
 function Login() {
   const navigate = useNavigate()
   const { colors } = useTheme()
+  const { loadUserMenus } = useMenu()
   const [form] = Form.useForm()
+  const [users, setUsers] = useState([])
+  const [loading, setLoading] = useState(false)
 
-  const handleSubmit = (values) => {
-    console.log('Login:', values)
-    localStorage.setItem('isLoggedIn', 'true')
-    localStorage.setItem('loginTime', new Date().toLocaleString('ko-KR'))
-    message.success('로그인 성공!')
-    navigate('/')
+  // 사용자 목록 로드
+  useEffect(() => {
+    fetchUsers().then(data => {
+      setUsers(data.users)
+    }).catch(err => {
+      console.error('Failed to load users:', err)
+    })
+  }, [])
+
+  const handleSubmit = async (values) => {
+    setLoading(true)
+    try {
+      console.log('Login:', values)
+      
+      // 사용자 정보 저장
+      localStorage.setItem('isLoggedIn', 'true')
+      localStorage.setItem('loginTime', new Date().toLocaleString('ko-KR'))
+      localStorage.setItem('userId', values.userId)
+      
+      // 메뉴 로드
+      await loadUserMenus(values.userId)
+      
+      message.success('로그인 성공!')
+      
+      // 첫 번째 접근 가능한 모듈로 이동
+      navigate('/accounting')
+    } catch (err) {
+      message.error('로그인 실패: ' + err.message)
+    } finally {
+      setLoading(false)
+    }
   }
+
+  // 사용자 선택 옵션
+  const userOptions = users.map(user => ({
+    value: user.id,
+    label: (
+      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <span>{user.name}</span>
+        <Text type="secondary" style={{ fontSize: 12 }}>{user.role}</Text>
+      </div>
+    ),
+    desc: `${user.email} (${user.role})`,
+  }))
 
   return (
     <div style={{
@@ -94,18 +137,24 @@ function Login() {
                 onFinish={handleSubmit}
                 size="large"
                 requiredMark={false}
+                initialValues={{ userId: 'admin' }}
               >
                 <Form.Item
-                  name="email"
-                  label="이메일"
-                  rules={[
-                    { required: true, message: '이메일을 입력해주세요' },
-                    { type: 'email', message: '올바른 이메일 형식이 아닙니다' },
-                  ]}
+                  name="userId"
+                  label="사용자 선택"
+                  rules={[{ required: true, message: '사용자를 선택해주세요' }]}
                 >
-                  <Input 
-                    prefix={<UserOutlined />} 
-                    placeholder="example@email.com"
+                  <Select
+                    placeholder="사용자를 선택하세요"
+                    options={userOptions}
+                    optionLabelProp="label"
+                    optionRender={(option) => (
+                      <div>
+                        <Text strong>{option.data.label}</Text>
+                        <br />
+                        <Text type="secondary" style={{ fontSize: 12 }}>{option.data.desc}</Text>
+                      </div>
+                    )}
                   />
                 </Form.Item>
 
@@ -113,6 +162,7 @@ function Login() {
                   name="password"
                   label="비밀번호"
                   rules={[{ required: true, message: '비밀번호를 입력해주세요' }]}
+                  initialValue="password"
                 >
                   <Input.Password 
                     prefix={<LockOutlined />} 
@@ -125,6 +175,7 @@ function Login() {
                     type="primary" 
                     htmlType="submit" 
                     block
+                    loading={loading}
                     style={{ 
                       height: 48,
                       background: colors.primaryGradient,
@@ -136,9 +187,23 @@ function Login() {
                 </Form.Item>
               </Form>
 
-              <Text type="secondary" style={{ display: 'block', textAlign: 'center' }}>
-                * 아무 이메일/비밀번호로 로그인 가능
-              </Text>
+              <div style={{ 
+                marginTop: 24, 
+                padding: 16, 
+                background: colors.card, 
+                borderRadius: 8,
+                border: `1px solid ${colors.border}`,
+              }}>
+                <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>
+                  <strong>테스트 계정</strong>
+                </Text>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  • <strong>admin</strong>: 전체 메뉴 접근<br />
+                  • <strong>user1</strong>: 회계 메뉴만 접근<br />
+                  • <strong>user2</strong>: 공사 메뉴만 접근<br />
+                  • <strong>viewer</strong>: 대시보드만 접근
+                </Text>
+              </div>
             </div>
           </Col>
         </Row>

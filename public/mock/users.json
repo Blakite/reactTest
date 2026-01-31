@@ -1,0 +1,46 @@
+{
+  "users": [
+    {
+      "id": "admin",
+      "name": "관리자",
+      "email": "admin@company.com",
+      "role": "ADMIN",
+      "menuAuth": ["*"]
+    },
+    {
+      "id": "user1",
+      "name": "회계담당자",
+      "email": "accounting@company.com",
+      "role": "USER",
+      "menuAuth": [
+        "ACC_DASHBOARD",
+        "ACC_JOURNAL",
+        "ACC_ACCOUNTS",
+        "ACC_VOUCHERS",
+        "ACC_CLOSING"
+      ]
+    },
+    {
+      "id": "user2",
+      "name": "공사담당자",
+      "email": "construction@company.com",
+      "role": "USER",
+      "menuAuth": [
+        "CON_DASHBOARD",
+        "CON_PROJECTS",
+        "CON_CONTRACTS",
+        "CON_PROGRESS"
+      ]
+    },
+    {
+      "id": "viewer",
+      "name": "조회자",
+      "email": "viewer@company.com",
+      "role": "VIEWER",
+      "menuAuth": [
+        "ACC_DASHBOARD",
+        "CON_DASHBOARD"
+      ]
+    }
+  ]
+}

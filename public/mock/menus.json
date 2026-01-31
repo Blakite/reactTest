@@ -1,0 +1,99 @@
+{
+  "modules": [
+    {
+      "id": "accounting",
+      "name": "회계관리",
+      "icon": "BankOutlined",
+      "sortOrder": 1
+    },
+    {
+      "id": "construction",
+      "name": "공사관리",
+      "icon": "ToolOutlined",
+      "sortOrder": 2
+    }
+  ],
+  "menus": [
+    {
+      "id": "ACC_DASHBOARD",
+      "moduleId": "accounting",
+      "key": "/accounting",
+      "label": "대시보드",
+      "icon": "DashboardOutlined",
+      "componentPath": "accounting/Dashboard",
+      "sortOrder": 1
+    },
+    {
+      "id": "ACC_JOURNAL",
+      "moduleId": "accounting",
+      "key": "/accounting/journal",
+      "label": "분개장",
+      "icon": "FileTextOutlined",
+      "componentPath": "accounting/JournalEntry",
+      "sortOrder": 2
+    },
+    {
+      "id": "ACC_ACCOUNTS",
+      "moduleId": "accounting",
+      "key": "/accounting/accounts",
+      "label": "계정과목",
+      "icon": "ProfileOutlined",
+      "componentPath": "accounting/AccountList",
+      "sortOrder": 3
+    },
+    {
+      "id": "ACC_VOUCHERS",
+      "moduleId": "accounting",
+      "key": "/accounting/vouchers",
+      "label": "전표관리",
+      "icon": "AuditOutlined",
+      "componentPath": "accounting/VoucherList",
+      "sortOrder": 4
+    },
+    {
+      "id": "ACC_CLOSING",
+      "moduleId": "accounting",
+      "key": "/accounting/closing",
+      "label": "마감현황",
+      "icon": "CheckCircleOutlined",
+      "componentPath": "accounting/ClosingStatus",
+      "sortOrder": 5
+    },
+    {
+      "id": "CON_DASHBOARD",
+      "moduleId": "construction",
+      "key": "/construction",
+      "label": "대시보드",
+      "icon": "DashboardOutlined",
+      "componentPath": "construction/Dashboard",
+      "sortOrder": 1
+    },
+    {
+      "id": "CON_PROJECTS",
+      "moduleId": "construction",
+      "key": "/construction/projects",
+      "label": "공사목록",
+      "icon": "ProjectOutlined",
+      "componentPath": "construction/ProjectList",
+      "sortOrder": 2
+    },
+    {
+      "id": "CON_CONTRACTS",
+      "moduleId": "construction",
+      "key": "/construction/contracts",
+      "label": "계약관리",
+      "icon": "ContainerOutlined",
+      "componentPath": "construction/ContractList",
+      "sortOrder": 3
+    },
+    {
+      "id": "CON_PROGRESS",
+      "moduleId": "construction",
+      "key": "/construction/progress",
+      "label": "기성관리",
+      "icon": "BarChartOutlined",
+      "componentPath": "construction/ProgressReport",
+      "sortOrder": 4
+    }
+  ]
+}

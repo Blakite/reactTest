@@ -1,58 +1,46 @@
-import { useState, Suspense } from 'react'
+import { useState, Suspense, lazy } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { 
   Layout, Menu, Avatar, Dropdown, Typography, Space, Segmented, Tabs, Spin,
-  DashboardOutlined, FileTextOutlined, ProfileOutlined, AuditOutlined,
-  ProjectOutlined, ContainerOutlined, BarChartOutlined, SettingOutlined,
-  LogoutOutlined, UserOutlined, BankOutlined, ToolOutlined, CheckCircleOutlined,
+  SettingOutlined, LogoutOutlined, UserOutlined, BankOutlined, ToolOutlined,
 } from '@/lib/antd'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useTab } from '@/contexts/TabContext'
+import { useMenu } from '@/contexts/MenuContext'
 import SettingsPopup from '@/components/SettingsPopup'
-import { componentRegistry } from '@/routes'
+import { getIcon } from '@/utils/iconMapping'
 
 const { Header, Sider, Content } = Layout
 const { Title, Text } = Typography
 
-// 메뉴 아이콘 매핑
-const menuIcons = {
-  '/accounting': <DashboardOutlined />,
-  '/accounting/journal': <FileTextOutlined />,
-  '/accounting/accounts': <ProfileOutlined />,
-  '/accounting/vouchers': <AuditOutlined />,
-  '/accounting/closing': <CheckCircleOutlined />,
-  '/construction': <DashboardOutlined />,
-  '/construction/projects': <ProjectOutlined />,
-  '/construction/contracts': <ContainerOutlined />,
-  '/construction/progress': <BarChartOutlined />,
+// Vite의 import.meta.glob으로 페이지 컴포넌트 미리 로드
+const pageModules = import.meta.glob('../pages/**/*.jsx')
+
+// 동적 컴포넌트 캐시
+const componentCache = {}
+
+// 동적 컴포넌트 로더
+function loadComponent(componentPath) {
+  if (!componentCache[componentPath]) {
+    const modulePath = `../pages/${componentPath}.jsx`
+    const importFn = pageModules[modulePath]
+    
+    if (!importFn) {
+      console.error(`[MainLayout] Component not found: ${modulePath}`)
+      // 폴백: 빈 컴포넌트 반환
+      componentCache[componentPath] = lazy(() => 
+        Promise.resolve({ default: () => <div>페이지를 찾을 수 없습니다: {componentPath}</div> })
+      )
+    } else {
+      componentCache[componentPath] = lazy(importFn)
+    }
+  }
+  return componentCache[componentPath]
 }
 
-const menuConfig = {
-  accounting: {
-    title: '회계관리',
-    icon: <BankOutlined />,
-    items: [
-      { key: '/accounting', label: '대시보드', icon: <DashboardOutlined /> },
-      { key: '/accounting/journal', label: '분개장', icon: <FileTextOutlined /> },
-      { key: '/accounting/accounts', label: '계정과목', icon: <ProfileOutlined /> },
-      { key: '/accounting/vouchers', label: '전표관리', icon: <AuditOutlined /> },
-      { key: '/accounting/closing', label: '마감현황', icon: <CheckCircleOutlined /> },
-    ],
-  },
-  construction: {
-    title: '공사관리',
-    icon: <ToolOutlined />,
-    items: [
-      { key: '/construction', label: '대시보드', icon: <DashboardOutlined /> },
-      { key: '/construction/projects', label: '공사목록', icon: <ProjectOutlined /> },
-      { key: '/construction/contracts', label: '계약관리', icon: <ContainerOutlined /> },
-      { key: '/construction/progress', label: '기성관리', icon: <BarChartOutlined /> },
-    ],
-  },
-}
-
-// 탭 컨텐츠 래퍼 (탭별로 컴포넌트 유지)
-function TabContent({ tabKey, component: Component }) {
+// 탭 컨텐츠 래퍼
+function TabContent({ tabKey, componentPath }) {
+  const Component = loadComponent(componentPath)
   return (
     <Suspense fallback={
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 300 }}>
@@ -68,27 +56,36 @@ function MainLayout({ module }) {
   const navigate = useNavigate()
   const { colors } = useTheme()
   const { tabs, activeKey, addTab, removeTab, setActiveTab } = useTab()
+  const { user, modules, getMenusByModule, getModulesWithIcons, isLoading: menuLoading, clearMenus } = useMenu()
   const [showSettings, setShowSettings] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
   
-  const currentMenu = menuConfig[module]
+  // 현재 모듈의 메뉴 가져오기
+  const currentMenuItems = getMenusByModule(module)
+  const modulesWithIcons = getModulesWithIcons()
+  
+  // 현재 모듈 정보
+  const currentModule = modulesWithIcons.find(m => m.id === module)
 
   const handleLogout = () => {
     localStorage.removeItem('isLoggedIn')
     localStorage.removeItem('loginTime')
+    localStorage.removeItem('userId')
+    clearMenus()
     navigate('/login')
   }
 
   // 메뉴 클릭 시 탭 추가
   const handleMenuClick = ({ key }) => {
-    const menuItem = currentMenu.items.find(item => item.key === key)
-    if (menuItem && componentRegistry[key]) {
+    const menuItem = currentMenuItems.find(item => item.key === key)
+    if (menuItem) {
       addTab({
         key: key,
         label: menuItem.label,
         path: key,
         module: module,
-        component: componentRegistry[key],
+        componentPath: menuItem.componentPath,
+        icon: menuItem.icon,
       })
     }
   }
@@ -129,6 +126,20 @@ function MainLayout({ module }) {
     },
   ]
 
+  // Ant Design Menu용 아이템 변환
+  const menuItemsForAntd = currentMenuItems.map(item => ({
+    key: item.key,
+    label: item.label,
+    icon: item.icon,
+  }))
+
+  // 모듈 선택 옵션
+  const moduleOptions = modulesWithIcons.map(mod => ({
+    label: mod.name.replace('관리', ''),  // '회계관리' -> '회계'
+    value: mod.id,
+    icon: mod.icon,
+  }))
+
   // 탭 아이템 생성
   const tabItems = tabs
     .filter(tab => tab.module === module)
@@ -136,17 +147,31 @@ function MainLayout({ module }) {
       key: tab.key,
       label: (
         <span>
-          {menuIcons[tab.key]} {tab.label}
+          {tab.icon} {tab.label}
         </span>
       ),
       children: (
         <TabContent 
           tabKey={tab.key} 
-          component={tab.component} 
+          componentPath={tab.componentPath} 
         />
       ),
       closable: true,
     }))
+
+  // 메뉴 로딩 중
+  if (menuLoading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh' 
+      }}>
+        <Spin size="large" tip="메뉴 로딩 중..." />
+      </div>
+    )
+  }
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -176,16 +201,13 @@ function MainLayout({ module }) {
         </div>
 
         {/* 모듈 선택 */}
-        {!collapsed && (
+        {!collapsed && moduleOptions.length > 1 && (
           <div style={{ padding: '16px' }}>
             <Segmented
               block
               value={module}
               onChange={handleModuleChange}
-              options={[
-                { label: '회계', value: 'accounting', icon: <BankOutlined /> },
-                { label: '공사', value: 'construction', icon: <ToolOutlined /> },
-              ]}
+              options={moduleOptions}
             />
           </div>
         )}
@@ -195,7 +217,7 @@ function MainLayout({ module }) {
           mode="inline"
           selectedKeys={activeKey ? [activeKey] : []}
           onClick={handleMenuClick}
-          items={currentMenu.items}
+          items={menuItemsForAntd}
           style={{ borderRight: 0 }}
         />
       </Sider>
@@ -210,7 +232,7 @@ function MainLayout({ module }) {
           borderBottom: `1px solid ${colors.border}`,
         }}>
           <Title level={4} style={{ margin: 0, color: colors.text }}>
-            {currentMenu.icon} {currentMenu.title}
+            {currentModule?.icon} {currentModule?.name || module}
           </Title>
 
           <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
@@ -220,8 +242,12 @@ function MainLayout({ module }) {
                 style={{ backgroundColor: colors.primary }}
               />
               <div style={{ lineHeight: 1.2 }}>
-                <Text strong style={{ display: 'block', color: colors.text }}>관리자</Text>
-                <Text type="secondary" style={{ fontSize: 12 }}>Administrator</Text>
+                <Text strong style={{ display: 'block', color: colors.text }}>
+                  {user?.name || '사용자'}
+                </Text>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  {user?.role || 'User'}
+                </Text>
               </div>
               <SettingOutlined style={{ color: colors.textSecondary }} />
             </Space>
@@ -264,7 +290,7 @@ function MainLayout({ module }) {
               flexDirection: 'column',
               gap: 16,
             }}>
-              <DashboardOutlined style={{ fontSize: 48, opacity: 0.5 }} />
+              {currentModule?.icon || <BankOutlined style={{ fontSize: 48, opacity: 0.5 }} />}
               <Text type="secondary">왼쪽 메뉴에서 화면을 선택하세요</Text>
             </div>
           )}
