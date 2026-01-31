@@ -1,14 +1,13 @@
 import { useState, Suspense, lazy } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { 
-  Layout, Menu, Avatar, Dropdown, Typography, Space, Segmented, Tabs, Spin,
-  SettingOutlined, LogoutOutlined, UserOutlined, BankOutlined, ToolOutlined,
+  Layout, Menu, Avatar, Dropdown, Typography, Space, Tabs, Spin,
+  SettingOutlined, LogoutOutlined, UserOutlined, BankOutlined,
 } from '@/lib/antd'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useTab } from '@/contexts/TabContext'
 import { useMenu } from '@/contexts/MenuContext'
 import SettingsPopup from '@/components/SettingsPopup'
-import { getIcon } from '@/utils/iconMapping'
 
 const { Header, Sider, Content } = Layout
 const { Title, Text } = Typography
@@ -27,7 +26,6 @@ function loadComponent(componentPath) {
     
     if (!importFn) {
       console.error(`[MainLayout] Component not found: ${modulePath}`)
-      // 폴백: 빈 컴포넌트 반환
       componentCache[componentPath] = lazy(() => 
         Promise.resolve({ default: () => <div>페이지를 찾을 수 없습니다: {componentPath}</div> })
       )
@@ -56,9 +54,8 @@ function MainLayout({ module }) {
   const navigate = useNavigate()
   const { colors } = useTheme()
   const { tabs, activeKey, addTab, removeTab, setActiveTab } = useTab()
-  const { user, modules, getMenusByModule, getModulesWithIcons, isLoading: menuLoading, clearMenus } = useMenu()
+  const { user, getMenusByModule, getModulesWithIcons, isLoading: menuLoading, clearMenus } = useMenu()
   const [showSettings, setShowSettings] = useState(false)
-  const [collapsed, setCollapsed] = useState(false)
   
   // 현재 모듈의 메뉴 가져오기
   const currentMenuItems = getMenusByModule(module)
@@ -90,9 +87,9 @@ function MainLayout({ module }) {
     }
   }
 
-  // 모듈 변경
-  const handleModuleChange = (value) => {
-    navigate(`/${value}`)
+  // 모듈 탭 변경
+  const handleModuleTabChange = (moduleId) => {
+    navigate(`/${moduleId}`)
   }
 
   // 탭 편집 (닫기)
@@ -114,9 +111,7 @@ function MainLayout({ module }) {
       icon: <SettingOutlined />,
       onClick: () => setShowSettings(true),
     },
-    {
-      type: 'divider',
-    },
+    { type: 'divider' },
     {
       key: 'logout',
       label: '로그아웃',
@@ -133,14 +128,17 @@ function MainLayout({ module }) {
     icon: item.icon,
   }))
 
-  // 모듈 선택 옵션
-  const moduleOptions = modulesWithIcons.map(mod => ({
-    label: mod.name.replace('관리', ''),  // '회계관리' -> '회계'
-    value: mod.id,
-    icon: mod.icon,
+  // 모듈 탭 아이템 생성
+  const moduleTabItems = modulesWithIcons.map(mod => ({
+    key: mod.id,
+    label: (
+      <span style={{ padding: '0 4px' }}>
+        {mod.icon} <span style={{ marginLeft: 4 }}>{mod.name.replace('관리', '')}</span>
+      </span>
+    ),
   }))
 
-  // 탭 아이템 생성
+  // 페이지 탭 아이템 생성
   const tabItems = tabs
     .filter(tab => tab.module === module)
     .map(tab => ({
@@ -175,125 +173,194 @@ function MainLayout({ module }) {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Sider 
-        collapsible 
-        collapsed={collapsed} 
-        onCollapse={setCollapsed}
-        width={250}
-        style={{
-          borderRight: `1px solid ${colors.border}`,
-        }}
-      >
-        {/* 로고 */}
-        <div style={{ 
-          padding: '20px', 
-          textAlign: 'center',
-          borderBottom: `1px solid ${colors.border}`,
+      {/* ========== 상단 헤더 (한 줄: 로고 + 모듈탭) ========== */}
+      <Header style={{ 
+        height: 48,
+        padding: 0, 
+        background: colors.primary,
+        display: 'flex',
+        alignItems: 'center',
+        lineHeight: 'normal',
+      }}>
+        {/* 로고 영역 */}
+        <div style={{
+          width: 220,
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          padding: '0 16px',
+          background: 'rgba(0,0,0,0.1)',
+          flexShrink: 0,
         }}>
-          <Space>
-            <BankOutlined style={{ fontSize: 24, color: colors.primary }} />
-            {!collapsed && (
-              <Title level={4} style={{ margin: 0, color: colors.text }}>
-                ERP System
-              </Title>
-            )}
+          <Space size="small">
+            <BankOutlined style={{ fontSize: 20, color: '#fff' }} />
+            <Title level={5} style={{ margin: 0, color: '#fff', fontWeight: 600 }}>
+              ERP System
+            </Title>
           </Space>
         </div>
 
-        {/* 모듈 선택 */}
-        {!collapsed && moduleOptions.length > 1 && (
-          <div style={{ padding: '16px' }}>
-            <Segmented
-              block
-              value={module}
-              onChange={handleModuleChange}
-              options={moduleOptions}
-            />
-          </div>
-        )}
-
-        {/* 메뉴 */}
-        <Menu
-          mode="inline"
-          selectedKeys={activeKey ? [activeKey] : []}
-          onClick={handleMenuClick}
-          items={menuItemsForAntd}
-          style={{ borderRight: 0 }}
-        />
-      </Sider>
+        {/* 모듈 탭바 */}
+        <div style={{ flex: 1, height: '100%', overflow: 'hidden' }}>
+          <Tabs
+            activeKey={module}
+            onChange={handleModuleTabChange}
+            items={moduleTabItems}
+            tabBarStyle={{
+              margin: 0,
+              height: 48,
+            }}
+            tabBarGutter={0}
+            className="module-tabs-inline"
+          />
+        </div>
+      </Header>
 
       <Layout>
-        {/* 헤더 */}
-        <Header style={{ 
-          padding: '0 24px', 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'space-between',
-          borderBottom: `1px solid ${colors.border}`,
-        }}>
-          <Title level={4} style={{ margin: 0, color: colors.text }}>
-            {currentModule?.icon} {currentModule?.name || module}
-          </Title>
-
-          <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
-            <Space style={{ cursor: 'pointer' }}>
-              <Avatar 
-                icon={<UserOutlined />} 
-                style={{ backgroundColor: colors.primary }}
-              />
-              <div style={{ lineHeight: 1.2 }}>
-                <Text strong style={{ display: 'block', color: colors.text }}>
-                  {user?.name || '사용자'}
-                </Text>
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  {user?.role || 'User'}
-                </Text>
+        {/* ========== 좌측 메뉴 사이드바 ========== */}
+        <Sider 
+          width={220}
+          style={{
+            background: colors.card,
+            borderRight: `1px solid ${colors.border}`,
+            height: 'calc(100vh - 48px)',
+            position: 'sticky',
+            top: 0,
+            overflow: 'hidden',
+          }}
+        >
+          <div style={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            height: '100%',
+          }}>
+            {/* 메뉴 영역 (스크롤 가능) */}
+            <div style={{ flex: 1, overflow: 'auto' }}>
+              {/* 현재 모듈 타이틀 */}
+              <div style={{ 
+                padding: '16px',
+                borderBottom: `1px solid ${colors.border}`,
+              }}>
+                <Space>
+                  <span style={{ fontSize: 18, color: colors.primary }}>
+                    {currentModule?.icon}
+                  </span>
+                  <Text strong style={{ fontSize: 15, color: colors.text }}>
+                    {currentModule?.name || '모듈'}
+                  </Text>
+                </Space>
               </div>
-              <SettingOutlined style={{ color: colors.textSecondary }} />
-            </Space>
-          </Dropdown>
-        </Header>
 
-        {/* 탭 콘텐츠 영역 */}
+              {/* 메뉴 목록 */}
+              <Menu
+                mode="inline"
+                selectedKeys={activeKey ? [activeKey] : []}
+                onClick={handleMenuClick}
+                items={menuItemsForAntd}
+                style={{ 
+                  borderRight: 0,
+                  background: 'transparent',
+                }}
+              />
+            </div>
+
+            {/* 사용자 정보 & 설정 (하단 고정) */}
+            <div style={{
+              borderTop: `1px solid ${colors.border}`,
+              padding: '12px 16px',
+              background: colors.card,
+              flexShrink: 0,
+            }}>
+              <Dropdown menu={{ items: userMenuItems }} placement="topRight" trigger={['click']}>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 12,
+                  cursor: 'pointer',
+                  padding: '8px',
+                  borderRadius: 6,
+                  transition: 'background 0.2s',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = colors.border}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                >
+                  <Avatar 
+                    icon={<UserOutlined />} 
+                    style={{ backgroundColor: colors.primary, flexShrink: 0 }}
+                  />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <Text strong style={{ display: 'block', color: colors.text }}>
+                      {user?.name || '사용자'}
+                    </Text>
+                    <Text type="secondary" style={{ fontSize: 12 }}>
+                      {user?.role || 'User'}
+                    </Text>
+                  </div>
+                  <SettingOutlined style={{ color: colors.textSecondary }} />
+                </div>
+              </Dropdown>
+            </div>
+          </div>
+        </Sider>
+
+        {/* ========== 메인 콘텐츠 영역 (MDI) ========== */}
         <Content style={{ 
-          margin: '0', 
-          padding: '0',
-          background: colors.card,
+          margin: 0, 
+          padding: 0,
+          background: colors.background,
           minHeight: 280,
           overflow: 'auto',
         }}>
-          {tabItems.length > 0 ? (
-            <Tabs
-              type="editable-card"
-              hideAdd
-              destroyInactiveTabPane={false}
-              activeKey={activeKey}
-              onChange={handleTabChange}
-              onEdit={handleTabEdit}
-              items={tabItems}
-              style={{ 
-                height: '100%',
-                padding: '8px 16px 0 16px',
-              }}
-              tabBarStyle={{
-                marginBottom: 0,
-              }}
-            />
-          ) : (
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'center', 
-              alignItems: 'center', 
-              height: '100%',
-              minHeight: 400,
-              color: colors.textSecondary,
+          <div
+            className="mdi-area"
+            style={{
+              margin: 16,
+              minHeight: 'calc(100vh - 48px - 32px)',
+              background: colors.card,
+              border: `1px solid ${colors.border}`,
+              borderRadius: 8,
+              boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px 0 rgba(0, 0, 0, 0.02)',
+              overflow: 'hidden',
+              display: 'flex',
               flexDirection: 'column',
-              gap: 16,
-            }}>
-              {currentModule?.icon || <BankOutlined style={{ fontSize: 48, opacity: 0.5 }} />}
-              <Text type="secondary">왼쪽 메뉴에서 화면을 선택하세요</Text>
-            </div>
-          )}
+            }}
+          >
+            {tabItems.length > 0 ? (
+              <Tabs
+                type="editable-card"
+                hideAdd
+                destroyInactiveTabPane={false}
+                activeKey={activeKey}
+                onChange={handleTabChange}
+                onEdit={handleTabEdit}
+                items={tabItems}
+                style={{ 
+                  flex: 1,
+                  height: '100%',
+                  padding: '8px 16px 0 16px',
+                }}
+                tabBarStyle={{
+                  marginBottom: 0,
+                }}
+              />
+            ) : (
+              <div style={{ 
+                flex: 1,
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center', 
+                minHeight: 400,
+                color: colors.textSecondary,
+                flexDirection: 'column',
+                gap: 16,
+              }}>
+                <span style={{ fontSize: 48, opacity: 0.3 }}>
+                  {currentModule?.icon || <BankOutlined />}
+                </span>
+                <Text type="secondary">왼쪽 메뉴에서 화면을 선택하세요</Text>
+              </div>
+            )}
+          </div>
         </Content>
       </Layout>
 
@@ -302,6 +369,55 @@ function MainLayout({ module }) {
         isOpen={showSettings} 
         onClose={() => setShowSettings(false)} 
       />
+
+      {/* 모듈 탭 스타일 (한 줄 버전) */}
+      <style>{`
+        .module-tabs-inline .ant-tabs-nav {
+          margin: 0 !important;
+          height: 48px !important;
+        }
+        .module-tabs-inline .ant-tabs-nav::before {
+          border-bottom: none !important;
+        }
+        .module-tabs-inline .ant-tabs-tab {
+          background: transparent !important;
+          border: none !important;
+          color: rgba(255,255,255,0.7) !important;
+          padding: 0 20px !important;
+          margin: 0 !important;
+          height: 48px !important;
+          line-height: 48px !important;
+          transition: all 0.2s;
+        }
+        .module-tabs-inline .ant-tabs-tab:hover {
+          color: #fff !important;
+          background: rgba(255,255,255,0.1) !important;
+        }
+        .module-tabs-inline .ant-tabs-tab-active {
+          background: rgba(255,255,255,0.15) !important;
+          color: #fff !important;
+        }
+        .module-tabs-inline .ant-tabs-tab-active .ant-tabs-tab-btn {
+          color: #fff !important;
+        }
+        .module-tabs-inline .ant-tabs-ink-bar {
+          background: #fff !important;
+          height: 3px !important;
+        }
+        .module-tabs-inline .ant-tabs-tab-btn {
+          color: inherit !important;
+        }
+        .module-tabs-inline .ant-tabs-nav-operations {
+          color: rgba(255,255,255,0.7) !important;
+        }
+        .module-tabs-inline .ant-tabs-nav-more {
+          color: rgba(255,255,255,0.7) !important;
+          height: 48px !important;
+        }
+        .module-tabs-inline .ant-tabs-nav-list {
+          height: 48px !important;
+        }
+      `}</style>
     </Layout>
   )
 }
