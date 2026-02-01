@@ -47,6 +47,7 @@ export {
   Tabs,
   Dropdown,
   Spin,
+  Tooltip,
 } from 'antd'
 
 // Navigation
@@ -91,4 +92,13 @@ export {
   // Contact
   MailOutlined,
   MobileOutlined,
+
+  // Tab toolbar
+  FullscreenOutlined,
+  FullscreenExitOutlined,
+  ReloadOutlined,
+  StarOutlined,
+  CloseOutlined,
+  ExportOutlined,
+  PushpinOutlined,
 } from '@ant-design/icons'

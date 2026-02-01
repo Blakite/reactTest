@@ -50,6 +50,7 @@ const sheetConfig = {
     HeaderMerge: 3,
   },
   Cols: [
+    { Header: '순번', Name: 'no', Type: 'Int', Width: 60, Align: 'Center' },
     { Header: '법인', Name: 'corp', Type: 'Text', Width: 100, Align: 'Center' },
     { Header: '부서', Name: 'dept', Type: 'Text', Width: 120, Align: 'Center' },
     { Header: '마감년월', Name: 'month', Type: 'Text', Width: 100, Align: 'Center' },
@@ -159,15 +160,17 @@ function ClosingStatus({ tabKey }) {
     return () => {}
   }, [isLoading])
 
-  // 필터링된 데이터 가져오기
+  // 필터링된 데이터 가져오기 (순번 부여)
   const getFilteredData = () => {
     const monthStr = closingMonth.format('YYYY-MM')
-    return sampleClosingData.filter(item => {
-      const corpMatch = selectedCorp === '전체' || item.corp === selectedCorp
-      const deptMatch = selectedDept === '전체' || item.dept === selectedDept
-      const monthMatch = item.month === monthStr
-      return corpMatch && deptMatch && monthMatch
-    })
+    return sampleClosingData
+      .filter(item => {
+        const corpMatch = selectedCorp === '전체' || item.corp === selectedCorp
+        const deptMatch = selectedDept === '전체' || item.dept === selectedDept
+        const monthMatch = item.month === monthStr
+        return corpMatch && deptMatch && monthMatch
+      })
+      .map((item, idx) => ({ ...item, no: idx + 1 }))
   }
 
   const filteredData = getFilteredData()

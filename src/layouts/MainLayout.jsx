@@ -1,8 +1,9 @@
-import { useState, Suspense, lazy } from 'react'
+import { useState, useEffect, useRef, Suspense, lazy } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { 
-  Layout, Menu, Avatar, Dropdown, Typography, Space, Tabs, Spin,
+  Layout, Menu, Avatar, Dropdown, Typography, Space, Tabs, Spin, Button, Tooltip,
   SettingOutlined, LogoutOutlined, UserOutlined, BankOutlined,
+  FullscreenOutlined, ReloadOutlined, StarOutlined, LockOutlined, CloseOutlined, ExportOutlined, PushpinOutlined,
 } from '@/lib/antd'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useTab } from '@/contexts/TabContext'
@@ -47,9 +48,24 @@ function TabContent({ tabKey, componentPath }) {
 function MainLayout({ module }) {
   const navigate = useNavigate()
   const { colors, layoutType } = useTheme()
-  const { tabs, activeKey, addTab, removeTab, setActiveTab } = useTab()
+  const { tabs, activeKey, addTab, removeTab, setActiveTab, removeAllTabs, removeOtherTabs, removeTabsToTheRight, removeTabsToTheLeft, togglePin, isPinned, refreshTab, refreshKeys } = useTab()
   const { user, getMenusByModule, getModulesWithIcons, isLoading: menuLoading, clearMenus } = useMenu()
   const [showSettings, setShowSettings] = useState(false)
+  const [contextMenu, setContextMenu] = useState(null)
+  const contextMenuRef = useRef(null)
+  // 전역 창 레지스트리 (탭/인스턴스 구분 없이 동일 메뉴는 한 창만 유지)
+  const getPopupRegistry = () => (window.__erpPopupWindows = window.__erpPopupWindows || {})
+
+  useEffect(() => {
+    if (!contextMenu) return
+    const close = (e) => {
+      if (contextMenuRef.current && !contextMenuRef.current.contains(e.target)) {
+        setContextMenu(null)
+      }
+    }
+    document.addEventListener('click', close)
+    return () => document.removeEventListener('click', close)
+  }, [contextMenu])
 
   const currentMenuItems = getMenusByModule(module)
   const modulesWithIcons = getModulesWithIcons()
@@ -82,7 +98,13 @@ function MainLayout({ module }) {
   }
 
   const handleTabEdit = (targetKey, action) => {
-    if (action === 'remove') removeTab(targetKey)
+    if (action === 'remove') {
+      if (isPinned(targetKey)) {
+        togglePin(targetKey) // 잠금 탭의 압핀 클릭 시 잠금 해제
+        return
+      }
+      removeTab(targetKey)
+    }
   }
 
   const handleTabChange = (key) => {
@@ -114,12 +136,108 @@ function MainLayout({ module }) {
     ),
   }))
 
-  // ERP 전체 단일 MDI: 모듈별 필터 없이 모든 탭 표시
+  const handleTabContextMenu = (e) => {
+    const el = e.target.closest('[data-tabkey]')
+    if (!el) return
+    e.preventDefault()
+    const tabKey = el.getAttribute('data-tabkey')
+    setContextMenu({ tabKey, x: e.clientX, y: e.clientY })
+  }
+
+  const handleContextMenuAction = (action) => {
+    if (!contextMenu) return
+    const { tabKey } = contextMenu
+    switch (action) {
+      case 'close':
+        removeTab(tabKey)
+        break
+      case 'closeAll':
+        removeAllTabs()
+        break
+      case 'closeRight':
+        removeTabsToTheRight(tabKey)
+        break
+      case 'closeLeft':
+        removeTabsToTheLeft(tabKey)
+        break
+      case 'closeOthers':
+        removeOtherTabs(tabKey)
+        setActiveTab(tabKey)
+        break
+      default:
+        break
+    }
+    setContextMenu(null)
+  }
+
+  const tabContextMenuItems = contextMenu ? [
+    { key: 'close', label: '탭 닫기', onClick: () => handleContextMenuAction('close') },
+    { key: 'closeAll', label: '모든 탭 닫기', onClick: () => handleContextMenuAction('closeAll') },
+    { key: 'closeRight', label: '현재 탭 오른쪽 모두 닫기', onClick: () => handleContextMenuAction('closeRight') },
+    { key: 'closeLeft', label: '현재 탭 왼쪽 모두 닫기', onClick: () => handleContextMenuAction('closeLeft') },
+    { key: 'closeOthers', label: '현재 탭 제외하고 닫기', onClick: () => handleContextMenuAction('closeOthers') },
+  ] : []
+
+  // 현재 액티브 탭만 팝업 윈도우로 열기 (창 ID = 메뉴 URL, 이미 열린 창이면 포커스만)
+  const handleOpenInNewWindow = () => {
+    if (!activeKey) return
+    const registry = getPopupRegistry()
+    const winId = activeKey
+    const existing = registry[winId]
+    if (existing && typeof existing.closed !== 'undefined' && !existing.closed) {
+      existing.focus()
+      return
+    }
+    const standaloneUrl = new URL('standalone', window.location.href)
+    standaloneUrl.searchParams.set('path', activeKey)
+    const popupFeatures = 'noopener,noreferrer,width=1200,height=800,scrollbars=yes,resizable=yes'
+    const winName = activeKey.replace(/\//g, '_') // 브라우저 창 이름에 / 사용 시 문제 방지
+    const w = window.open(standaloneUrl.href, winName, popupFeatures)
+    if (w) registry[winId] = w
+  }
+
+  // 툴바 버튼: lineHeight 22px, 하나의 그룹 박스로 표시 (라이트/다크 테마 대응)
+  const toolbarIconSize = 11
+  const toolbarBtnBase = { minWidth: 22, height: 22, lineHeight: '22px', padding: '0 4px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 0, color: colors.text }
+  const toolbarGroupStyle = { display: 'inline-flex', alignItems: 'stretch', border: `1px solid ${colors.border}`, borderRadius: 6, overflow: 'hidden', marginLeft: 8, background: colors.card }
+  const toolbarButtons = [
+    { key: 'newWin', tip: '현재창을 새창으로 열기 (메뉴만 오픈)', icon: <ExportOutlined style={{ fontSize: toolbarIconSize }} />, onClick: handleOpenInNewWindow },
+    { key: 'closeAll', tip: '모든 탭 닫기 (고정된 탭 제외)', icon: <CloseOutlined style={{ fontSize: toolbarIconSize }} />, onClick: removeAllTabs },
+    { key: 'pin', tip: isPinned(activeKey) ? '현재창 잠금 해제' : '현재창 잠금', icon: <LockOutlined style={{ fontSize: toolbarIconSize }} />, onClick: () => activeKey && togglePin(activeKey), primary: isPinned(activeKey) },
+    { key: 'refresh', tip: '현재 액티브 탭 새로고침', icon: <ReloadOutlined style={{ fontSize: toolbarIconSize }} />, onClick: () => activeKey && refreshTab(activeKey) },
+    { key: 'fullscreen', tip: '전체화면으로 보기', icon: <FullscreenOutlined style={{ fontSize: toolbarIconSize }} />, onClick: () => document.documentElement.requestFullscreen?.() },
+    { key: 'star', tip: '즐겨찾기등록', icon: <StarOutlined style={{ fontSize: toolbarIconSize }} />, onClick: () => {} },
+  ]
+  const tabToolbar = (
+    <div style={toolbarGroupStyle}>
+      {toolbarButtons.map((btn, idx) => (
+        <Tooltip key={btn.key} title={btn.tip}>
+          <Button
+            type={btn.primary ? 'primary' : 'text'}
+            size="small"
+            icon={btn.icon}
+            onClick={btn.onClick}
+            style={{
+              ...toolbarBtnBase,
+              borderRight: idx < toolbarButtons.length - 1 ? `1px solid ${colors.border}` : 'none',
+            }}
+          />
+        </Tooltip>
+      ))}
+    </div>
+  )
+
+  // ERP 전체 단일 MDI: 모듈별 필터 없이 모든 탭 표시 (우클릭용 data-tabkey, 고정 탭은 X 위치에 압핀 표시, 새로고침용 key)
   const tabItems = tabs.map((tab) => ({
     key: tab.key,
-    label: <span>{tab.icon} {tab.label}</span>,
-    children: <TabContent tabKey={tab.key} componentPath={tab.componentPath} />,
+    label: (
+      <span data-tabkey={tab.key} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+        {tab.icon} {tab.label}
+      </span>
+    ),
+    children: <TabContent key={`${tab.key}-${refreshKeys[tab.key] || 0}`} tabKey={tab.key} componentPath={tab.componentPath} />,
     closable: true,
+    closeIcon: isPinned(tab.key) ? <PushpinOutlined style={{ fontSize: 12 }} /> : undefined, // 잠금 시 X 위치에 고정 압핀 표시
   }))
 
   if (menuLoading) {
@@ -212,7 +330,28 @@ function MainLayout({ module }) {
           </Header>
           <Content style={{ margin: 0, padding: 0, background: colors.background, minHeight: 280, overflow: 'auto' }}>
             {tabItems.length > 0 ? (
-              <Tabs type="editable-card" hideAdd destroyInactiveTabPane={false} activeKey={activeKey} onChange={handleTabChange} onEdit={handleTabEdit} items={tabItems} style={{ height: '100%', padding: '8px 16px 0 16px' }} tabBarStyle={{ marginBottom: 0 }} />
+              <div onContextMenu={handleTabContextMenu} style={{ height: '100%' }}>
+                {contextMenu && (
+                  <div
+                    ref={contextMenuRef}
+                    style={{
+                      position: 'fixed',
+                      left: contextMenu.x,
+                      top: contextMenu.y,
+                      zIndex: 1050,
+                      background: colors.card,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: 8,
+                      boxShadow: '0 6px 16px rgba(0,0,0,0.08)',
+                      padding: '4px 0',
+                      minWidth: 180,
+                    }}
+                  >
+                    <Menu mode="vertical" selectedKeys={[]} items={tabContextMenuItems} style={{ border: 'none', background: 'transparent' }} />
+                  </div>
+                )}
+                <Tabs type="editable-card" hideAdd destroyInactiveTabPane={false} activeKey={activeKey} onChange={handleTabChange} onEdit={handleTabEdit} items={tabItems} tabBarExtraContent={tabToolbar} style={{ height: '100%', padding: '8px 16px 0 16px' }} tabBarStyle={{ marginBottom: 0 }} />
+              </div>
             ) : (
               <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', minHeight: 400, color: colors.textSecondary, flexDirection: 'column', gap: 16 }}>
                 <span style={{ fontSize: 48, opacity: 0.3 }}>{currentModule?.icon || <BankOutlined />}</span>
@@ -276,7 +415,28 @@ function MainLayout({ module }) {
         <Content style={{ margin: 0, padding: 0, background: colors.background, minHeight: 280, overflow: 'auto' }}>
           <div style={{ margin: 16, minHeight: 'calc(100vh - 48px - 32px)', background: colors.card, border: `1px solid ${colors.border}`, borderRadius: 8, boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px 0 rgba(0, 0, 0, 0.02)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
             {tabItems.length > 0 ? (
-              <Tabs type="editable-card" hideAdd destroyInactiveTabPane={false} activeKey={activeKey} onChange={handleTabChange} onEdit={handleTabEdit} items={tabItems} style={{ flex: 1, height: '100%', padding: '8px 16px 0 16px' }} tabBarStyle={{ marginBottom: 0 }} />
+              <div onContextMenu={handleTabContextMenu} style={{ flex: 1, height: '100%' }}>
+                {contextMenu && (
+                  <div
+                    ref={contextMenuRef}
+                    style={{
+                      position: 'fixed',
+                      left: contextMenu.x,
+                      top: contextMenu.y,
+                      zIndex: 1050,
+                      background: colors.card,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: 8,
+                      boxShadow: '0 6px 16px rgba(0,0,0,0.08)',
+                      padding: '4px 0',
+                      minWidth: 180,
+                    }}
+                  >
+                    <Menu mode="vertical" selectedKeys={[]} items={tabContextMenuItems} style={{ border: 'none', background: 'transparent' }} />
+                  </div>
+                )}
+                <Tabs type="editable-card" hideAdd destroyInactiveTabPane={false} activeKey={activeKey} onChange={handleTabChange} onEdit={handleTabEdit} items={tabItems} tabBarExtraContent={tabToolbar} style={{ flex: 1, height: '100%', padding: '8px 16px 0 16px' }} tabBarStyle={{ marginBottom: 0 }} />
+              </div>
             ) : (
               <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400, color: colors.textSecondary, flexDirection: 'column', gap: 16 }}>
                 <span style={{ fontSize: 48, opacity: 0.3 }}>{currentModule?.icon || <BankOutlined />}</span>
