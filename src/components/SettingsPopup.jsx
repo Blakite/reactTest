@@ -4,11 +4,12 @@ import {
   MailOutlined, ClockCircleOutlined, BankOutlined, MobileOutlined,
 } from '@/lib/antd'
 import { useTheme } from '@/contexts/ThemeContext'
+import { LAYOUT_SIDEBAR, LAYOUT_TOP } from '@/contexts/ThemeContext'
 
 const { Text, Title } = Typography
 
 function SettingsPopup({ isOpen, onClose }) {
-  const { colors, toggleTheme, isDark } = useTheme()
+  const { colors, toggleTheme, isDark, layoutType, setLayoutType } = useTheme()
   
   const loginTime = localStorage.getItem('loginTime') || new Date().toLocaleString('ko-KR')
 
@@ -18,7 +19,15 @@ function SettingsPopup({ isOpen, onClose }) {
       label: (
         <span><SettingOutlined /> 설정</span>
       ),
-      children: <SettingsTab isDark={isDark} toggleTheme={toggleTheme} colors={colors} />,
+      children: (
+        <SettingsTab
+          isDark={isDark}
+          toggleTheme={toggleTheme}
+          colors={colors}
+          layoutType={layoutType}
+          setLayoutType={setLayoutType}
+        />
+      ),
     },
     {
       key: 'password',
@@ -50,9 +59,10 @@ function SettingsPopup({ isOpen, onClose }) {
   )
 }
 
-function SettingsTab({ isDark, toggleTheme, colors }) {
+function SettingsTab({ isDark, toggleTheme, colors, layoutType, setLayoutType }) {
   return (
     <div>
+      {/* 테마 모드 */}
       <Card size="small" style={{ marginBottom: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
@@ -71,7 +81,7 @@ function SettingsTab({ isDark, toggleTheme, colors }) {
         </div>
       </Card>
 
-      <Row gutter={16}>
+      <Row gutter={16} style={{ marginBottom: 24 }}>
         <Col span={12}>
           <Card
             hoverable
@@ -112,6 +122,63 @@ function SettingsTab({ isDark, toggleTheme, colors }) {
               <div style={{ height: 12, backgroundColor: '#303030', width: '80%', borderRadius: 4 }} />
             </div>
             <Text>🌙 다크</Text>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* 레이아웃 타입 */}
+      <Card size="small" style={{ marginBottom: 16 }}>
+        <div style={{ marginBottom: 12 }}>
+          <Text strong>레이아웃</Text>
+          <br />
+          <Text type="secondary">메뉴 표시 방식을 선택하세요</Text>
+        </div>
+      </Card>
+
+      <Row gutter={16}>
+        <Col span={12}>
+          <Card
+            hoverable
+            onClick={() => setLayoutType(LAYOUT_SIDEBAR)}
+            style={{ 
+              textAlign: 'center',
+              border: layoutType === LAYOUT_SIDEBAR ? `2px solid ${colors.primary}` : undefined,
+            }}
+          >
+            <div style={{
+              backgroundColor: isDark ? '#1f1f1f' : '#f5f7fa',
+              borderRadius: 8,
+              padding: 10,
+              marginBottom: 8,
+              display: 'flex',
+              justifyContent: 'center',
+              gap: 2,
+            }}>
+              <div style={{ width: 24, height: 40, backgroundColor: colors.primary, borderRadius: 4, opacity: 0.8 }} />
+              <div style={{ width: 60, height: 40, backgroundColor: colors.border, borderRadius: 4 }} />
+            </div>
+            <Text>이중 사이드바</Text>
+          </Card>
+        </Col>
+        <Col span={12}>
+          <Card
+            hoverable
+            onClick={() => setLayoutType(LAYOUT_TOP)}
+            style={{ 
+              textAlign: 'center',
+              border: layoutType === LAYOUT_TOP ? `2px solid ${colors.primary}` : undefined,
+            }}
+          >
+            <div style={{
+              backgroundColor: isDark ? '#1f1f1f' : '#f5f7fa',
+              borderRadius: 8,
+              padding: 10,
+              marginBottom: 8,
+            }}>
+              <div style={{ height: 16, backgroundColor: colors.primary, marginBottom: 6, borderRadius: 4 }} />
+              <div style={{ height: 24, backgroundColor: colors.border, borderRadius: 4 }} />
+            </div>
+            <Text>상단 탭바</Text>
           </Card>
         </Col>
       </Row>

@@ -75,10 +75,19 @@ const getAntTheme = (isDark) => ({
   },
 })
 
+// 레이아웃 타입: 'sidebar' = 이중 사이드바, 'top' = 상단 탭바
+export const LAYOUT_SIDEBAR = 'sidebar'
+export const LAYOUT_TOP = 'top'
+
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(() => {
     const saved = localStorage.getItem('theme')
     return saved || 'dark'
+  })
+
+  const [layoutType, setLayoutType] = useState(() => {
+    const saved = localStorage.getItem('layoutType')
+    return saved === LAYOUT_TOP || saved === LAYOUT_SIDEBAR ? saved : LAYOUT_TOP
   })
 
   useEffect(() => {
@@ -86,6 +95,10 @@ export function ThemeProvider({ children }) {
     // body 배경색 변경
     document.body.style.backgroundColor = themes[theme].colors.background
   }, [theme])
+
+  useEffect(() => {
+    localStorage.setItem('layoutType', layoutType)
+  }, [layoutType])
 
   const toggleTheme = () => {
     setTheme(prev => prev === 'dark' ? 'light' : 'dark')
@@ -99,6 +112,8 @@ export function ThemeProvider({ children }) {
     toggleTheme,
     colors: themes[theme].colors,
     isDark,
+    layoutType,
+    setLayoutType,
   }
 
   return (
