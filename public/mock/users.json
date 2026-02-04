@@ -14,9 +14,14 @@
       "role": "USER",
       "menuAuth": [
         "ACC_DASHBOARD",
-        "ACC_JOURNAL",
+        "ACC_VOUCHER_MGMT",
+        "ACC_SETTLEMENT_MGMT",
+        "ACC_CONST_SALES_COST",
+        "ACC_LEASE_MGMT",
+        "ACC_ASSET_MGMT",
+        "ACC_TAX_MGMT",
+        "ACC_BASE_INFO",
         "ACC_ACCOUNTS",
-        "ACC_VOUCHERS",
         "ACC_CLOSING"
       ]
     },

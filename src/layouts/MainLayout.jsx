@@ -49,7 +49,7 @@ function MainLayout({ module }) {
   const navigate = useNavigate()
   const { colors, layoutType } = useTheme()
   const { tabs, activeKey, addTab, removeTab, setActiveTab, removeAllTabs, removeOtherTabs, removeTabsToTheRight, removeTabsToTheLeft, togglePin, isPinned, refreshTab, refreshKeys } = useTab()
-  const { user, getMenusByModule, getModulesWithIcons, isLoading: menuLoading, clearMenus } = useMenu()
+  const { user, getMenusByModule, getMenuByKey, getModulesWithIcons, isLoading: menuLoading, clearMenus } = useMenu()
   const [showSettings, setShowSettings] = useState(false)
   const [contextMenu, setContextMenu] = useState(null)
   const contextMenuRef = useRef(null)
@@ -80,8 +80,8 @@ function MainLayout({ module }) {
   }
 
   const handleMenuClick = ({ key }) => {
-    const menuItem = currentMenuItems.find(item => item.key === key)
-    if (menuItem) {
+    const menuItem = getMenuByKey(key)
+    if (menuItem?.componentPath) {
       addTab({
         key: key,
         label: menuItem.label,
@@ -121,11 +121,14 @@ function MainLayout({ module }) {
     { key: 'logout', label: '로그아웃', icon: <LogoutOutlined />, danger: true, onClick: handleLogout },
   ]
 
-  const menuItemsForAntd = currentMenuItems.map(item => ({
-    key: item.key,
-    label: item.label,
-    icon: item.icon,
-  }))
+  const toAntdMenuItems = (items) =>
+    items?.map((item) => ({
+      key: item.key,
+      label: item.label,
+      icon: item.icon,
+      ...(item.children?.length ? { children: toAntdMenuItems(item.children) } : {}),
+    }))
+  const menuItemsForAntd = toAntdMenuItems(currentMenuItems)
 
   const moduleTabItems = modulesWithIcons.map(mod => ({
     key: mod.id,
@@ -312,7 +315,7 @@ function MainLayout({ module }) {
               <Title level={5} style={{ margin: 0, color: colors.text }}>{currentModule?.name || '모듈'}</Title>
             </Space>
           </div>
-          <Menu mode="inline" selectedKeys={activeKey ? [activeKey] : []} onClick={handleMenuClick} items={menuItemsForAntd} style={{ borderRight: 0, background: 'transparent' }} />
+          <Menu mode="inline" selectedKeys={activeKey ? [activeKey] : []} onClick={handleMenuClick} items={menuItemsForAntd} style={{ borderRight: 0, background: 'transparent' }} className="erp-sidebar-menu" inlineIndent={10} />
         </Sider>
 
         <Layout>
@@ -391,7 +394,7 @@ function MainLayout({ module }) {
                   <Text strong style={{ fontSize: 15, color: colors.text }}>{currentModule?.name || '모듈'}</Text>
                 </Space>
               </div>
-              <Menu mode="inline" selectedKeys={activeKey ? [activeKey] : []} onClick={handleMenuClick} items={menuItemsForAntd} style={{ borderRight: 0, background: 'transparent' }} />
+              <Menu mode="inline" selectedKeys={activeKey ? [activeKey] : []} onClick={handleMenuClick} items={menuItemsForAntd} style={{ borderRight: 0, background: 'transparent' }} className="erp-sidebar-menu" inlineIndent={10} />
             </div>
             <div style={{ borderTop: `1px solid ${colors.border}`, padding: '12px 16px', background: colors.card, flexShrink: 0 }}>
               <Dropdown menu={{ items: userMenuItems }} placement="topRight" trigger={['click']}>

@@ -32,6 +32,8 @@ import {
   AccountBookOutlined,
   CreditCardOutlined,
   WalletOutlined,
+  CalculatorOutlined,
+  FileOutlined,
   ShoppingCartOutlined,
   GiftOutlined,
   TruckOutlined,
@@ -114,7 +116,9 @@ const iconComponents = {
   AccountBookOutlined,
   CreditCardOutlined,
   WalletOutlined,
-  
+  CalculatorOutlined,
+  FileOutlined,
+
   // 물류 & 배송
   ShoppingCartOutlined,
   GiftOutlined,

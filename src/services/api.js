@@ -43,16 +43,35 @@ export async function fetchUserMenus(userId) {
     throw new Error(`User not found: ${userId}`)
   }
 
-  // 권한에 따라 메뉴 필터링
+  // 권한에 따라 메뉴 필터링 (3레벨 메뉴 트리용 상위 메뉴 포함)
   let authorizedMenus
   if (user.menuAuth.includes('*')) {
-    // 관리자: 모든 메뉴
     authorizedMenus = menuData.menus
   } else {
-    // 일반 사용자: 권한 있는 메뉴만
-    authorizedMenus = menuData.menus.filter(menu => 
-      user.menuAuth.includes(menu.id)
-    )
+    const needIds = new Set(user.menuAuth)
+    // 상위 메뉴(폴더) 포함
+    let changed = true
+    while (changed) {
+      changed = false
+      for (const m of menuData.menus) {
+        if (m.parentId && needIds.has(m.id) && !needIds.has(m.parentId)) {
+          needIds.add(m.parentId)
+          changed = true
+        }
+      }
+    }
+    // 하위 메뉴 포함 (폴더 권한이 있으면 자식까지)
+    changed = true
+    while (changed) {
+      changed = false
+      for (const m of menuData.menus) {
+        if (m.parentId && needIds.has(m.parentId) && !needIds.has(m.id)) {
+          needIds.add(m.id)
+          changed = true
+        }
+      }
+    }
+    authorizedMenus = menuData.menus.filter(m => needIds.has(m.id))
   }
 
   // 권한 있는 모듈만 필터링

@@ -24,11 +24,12 @@ export function MenuProvider({ children }) {
       setModules(data.modules)
       setMenus(data.menus)
 
-      // 컴포넌트 레지스트리 생성 (동적 import)
+      // 컴포넌트 레지스트리 생성 (동적 import, 리프 메뉴만)
       const registry = {}
       for (const menu of data.menus) {
-        // 동적 import를 위한 함수 저장
-        registry[menu.key] = () => import(/* @vite-ignore */ `@/pages/${menu.componentPath}`)
+        if (menu.componentPath) {
+          registry[menu.key] = () => import(/* @vite-ignore */ `@/pages/${menu.componentPath}`)
+        }
       }
       setComponentRegistry(registry)
 
@@ -51,16 +52,32 @@ export function MenuProvider({ children }) {
     }
   }, [loadUserMenus])
 
-  // 특정 모듈의 메뉴 가져오기
+  // 특정 모듈의 메뉴 가져오기 (3레벨 트리 구조)
   const getMenusByModule = useCallback((moduleId) => {
-    return menus
+    const list = menus
       .filter(menu => menu.moduleId === moduleId)
-      .map(menu => ({
-        key: menu.key,
-        label: menu.label,
-        icon: getIcon(menu.icon),
-        componentPath: menu.componentPath,
-      }))
+      .sort((a, b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999))
+    const byId = {}
+    list.forEach(m => { byId[m.id] = { ...m, childNodes: [] } })
+    const roots = []
+    list.forEach(m => {
+      const node = byId[m.id]
+      if (!m.parentId) roots.push(node)
+      else if (byId[m.parentId]) byId[m.parentId].childNodes.push(node)
+    })
+    const toAntdItem = (node) => {
+      const children = node.childNodes?.length
+        ? node.childNodes.sort((a, b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999)).map(toAntdItem)
+        : undefined
+      return {
+        key: node.key,
+        label: node.label,
+        icon: getIcon(node.icon),
+        ...(children?.length ? { children } : {}),
+        ...(node.componentPath ? { componentPath: node.componentPath } : {}),
+      }
+    }
+    return roots.sort((a, b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999)).map(toAntdItem)
   }, [menus])
 
   // 메뉴 키로 메뉴 정보 가져오기

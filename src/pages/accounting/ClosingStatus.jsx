@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { 
-  SearchForm, SearchButtons, PageHeader, StatCard,
-  Form, Select, DatePicker, Row, Col, Card,
+  SearchForm, SearchButtons, PageHeader,
+  Form, Select, DatePicker, Card,
   FileTextOutlined 
 } from '@/components/ui'
-import { Spin, message } from 'antd'
+import { Spin, message, Checkbox } from 'antd'
 import dayjs from 'dayjs'
 import ibsheetManager from '@/utils/ibsheetManager'
 
@@ -18,14 +18,31 @@ const getDefaultClosingMonth = () => {
   return today.startOf('month')
 }
 
-// 샘플 데이터
+// 상단 체크박스 옵션 (그림과 동일)
+const SECTION_CHECKBOXES = [
+  { key: 'siteClose', label: '현장마감여부' },
+  { key: 'siteExpense', label: '현장경비' },
+  { key: 'corpCard', label: '법인카드' },
+  { key: 'advanceFund', label: '전도금현황' },
+  { key: 'tempPayment', label: '가지급금현황' },
+  { key: 'tempReceipt', label: '가수금현황' },
+  { key: 'jointVenture', label: '공동도급' },
+]
+
+// 샘플 데이터 (그림 컬럼 구조에 맞춤)
 const sampleClosingData = [
-  { id: 1, corp: '본사', dept: '경영지원팀', month: '2026-01', status: '마감완료', closedAt: '2026-01-15', closedBy: '김회계' },
-  { id: 2, corp: '본사', dept: '개발팀', month: '2026-01', status: '마감완료', closedAt: '2026-01-14', closedBy: '이재무' },
-  { id: 3, corp: '본사', dept: '영업팀', month: '2026-01', status: '미마감', closedAt: '', closedBy: '' },
-  { id: 4, corp: '지사A', dept: '경영지원팀', month: '2026-01', status: '마감완료', closedAt: '2026-01-13', closedBy: '박경리' },
-  { id: 5, corp: '지사A', dept: '영업팀', month: '2026-01', status: '진행중', closedAt: '', closedBy: '' },
-  { id: 6, corp: '지사B', dept: '경영지원팀', month: '2026-01', status: '미마감', closedAt: '', closedBy: '' },
+  {
+    no: 1, chk: false, gubun: '현장', siteCode: 'S001', siteName: 'A현장',
+    siteClose_construction: 'Y', siteClose_outside: 'Y', siteClose_material: 'Y', siteClose_labor: 'Y', siteClose_expense: 'Y', siteClose_corpCard: 'Y',
+    advance_prevMonth: 1000, advance_deposit: 500, advance_withdraw: 300, advance_balance: 1200,
+    tempPay_lastDate: '2026-01-15', tempPay_applied: 2000, tempPay_settlement: 1800, tempPay_balance: 200,
+  },
+  {
+    no: 2, chk: false, gubun: '현장', siteCode: 'S002', siteName: 'B현장',
+    siteClose_construction: 'Y', siteClose_outside: 'N', siteClose_material: 'Y', siteClose_labor: 'Y', siteClose_expense: 'N', siteClose_corpCard: 'Y',
+    advance_prevMonth: 800, advance_deposit: 200, advance_withdraw: 400, advance_balance: 600,
+    tempPay_lastDate: '2026-01-10', tempPay_applied: 1500, tempPay_settlement: 1500, tempPay_balance: 0,
+  },
 ]
 
 const corporations = [
@@ -42,29 +59,48 @@ const departments = [
   { value: '영업팀', label: '영업팀' },
 ]
 
-// IBSheet 설정
+// IBSheet 설정 - 전사마감현황 목록 컬럼 (그림과 동일: 다단 헤더)
 const sheetConfig = {
   Cfg: {
     SearchMode: 2,
     CanEdit: 0,
-    HeaderMerge: 3,
+    HeaderMerge: 2,
   },
   Cols: [
-    { Header: '순번', Name: 'no', Type: 'Int', Width: 60, Align: 'Center' },
-    { Header: '법인', Name: 'corp', Type: 'Text', Width: 100, Align: 'Center' },
-    { Header: '부서', Name: 'dept', Type: 'Text', Width: 120, Align: 'Center' },
-    { Header: '마감년월', Name: 'month', Type: 'Text', Width: 100, Align: 'Center' },
-    { Header: '마감상태', Name: 'status', Type: 'Text', Width: 100, Align: 'Center' },
-    { Header: '마감일시', Name: 'closedAt', Type: 'Text', Width: 120, Align: 'Center' },
-    { Header: '마감처리자', Name: 'closedBy', Type: 'Text', Width: 100, Align: 'Center' },
+    { Header: '순번', Name: 'no', Type: 'Int', Width: 50, Align: 'Center' },
+    { Header: '선택', Name: 'chk', Type: 'Bool', Width: 50, Align: 'Center' },
+    { Header: '구분', Name: 'gubun', Type: 'Text', Width: 70, Align: 'Center' },
+    { Header: '현장코드', Name: 'siteCode', Type: 'Text', Width: 90, Align: 'Center' },
+    { Header: '현장명', Name: 'siteName', Type: 'Text', Width: 100, Align: 'Center' },
+    // 현장마감여부 (6개)
+    { Header: ['현장마감여부', '공사'], Name: 'siteClose_construction', Type: 'Text', Width: 60, Align: 'Center' },
+    { Header: ['현장마감여부', '외주'], Name: 'siteClose_outside', Type: 'Text', Width: 60, Align: 'Center' },
+    { Header: ['현장마감여부', '자재'], Name: 'siteClose_material', Type: 'Text', Width: 60, Align: 'Center' },
+    { Header: ['현장마감여부', '노무'], Name: 'siteClose_labor', Type: 'Text', Width: 60, Align: 'Center' },
+    { Header: ['현장마감여부', '현장경비 미결제'], Name: 'siteClose_expense', Type: 'Text', Width: 100, Align: 'Center' },
+    { Header: ['현장마감여부', '법인카드 미결제'], Name: 'siteClose_corpCard', Type: 'Text', Width: 100, Align: 'Center' },
+    // 전도금 현황 (4개)
+    { Header: ['전도금 현황', '전월이월'], Name: 'advance_prevMonth', Type: 'Int', Width: 90, Align: 'Right', Format: '#,###' },
+    { Header: ['전도금 현황', '입금'], Name: 'advance_deposit', Type: 'Int', Width: 90, Align: 'Right', Format: '#,###' },
+    { Header: ['전도금 현황', '출금'], Name: 'advance_withdraw', Type: 'Int', Width: 90, Align: 'Right', Format: '#,###' },
+    { Header: ['전도금 현황', '잔액'], Name: 'advance_balance', Type: 'Int', Width: 90, Align: 'Right', Format: '#,###' },
+    // 가지급금 현황 (4개)
+    { Header: ['가지급금 현황', '최종지급일'], Name: 'tempPay_lastDate', Type: 'Text', Width: 90, Align: 'Center' },
+    { Header: ['가지급금 현황', '신청금액'], Name: 'tempPay_applied', Type: 'Int', Width: 90, Align: 'Right', Format: '#,###' },
+    { Header: ['가지급금 현황', '정산금액'], Name: 'tempPay_settlement', Type: 'Int', Width: 90, Align: 'Right', Format: '#,###' },
+    { Header: ['가지급금 현황', '잔액'], Name: 'tempPay_balance', Type: 'Int', Width: 90, Align: 'Right', Format: '#,###' },
   ],
 }
+
+// 체크박스 기본값 (모두 체크)
+const defaultSectionChecked = SECTION_CHECKBOXES.reduce((acc, { key }) => ({ ...acc, [key]: true }), {})
 
 function ClosingStatus({ tabKey }) {
   const [form] = Form.useForm()
   const [selectedCorp, setSelectedCorp] = useState('전체')
   const [selectedDept, setSelectedDept] = useState('전체')
   const [closingMonth, setClosingMonth] = useState(getDefaultClosingMonth())
+  const [sectionChecked, setSectionChecked] = useState(defaultSectionChecked)
   
   // Loader 관련 상태
   const [isLoading, setIsLoading] = useState(true)
@@ -162,15 +198,7 @@ function ClosingStatus({ tabKey }) {
 
   // 필터링된 데이터 가져오기 (순번 부여)
   const getFilteredData = () => {
-    const monthStr = closingMonth.format('YYYY-MM')
-    return sampleClosingData
-      .filter(item => {
-        const corpMatch = selectedCorp === '전체' || item.corp === selectedCorp
-        const deptMatch = selectedDept === '전체' || item.dept === selectedDept
-        const monthMatch = item.month === monthStr
-        return corpMatch && deptMatch && monthMatch
-      })
-      .map((item, idx) => ({ ...item, no: idx + 1 }))
+    return sampleClosingData.map((item, idx) => ({ ...item, no: idx + 1 }))
   }
 
   const filteredData = getFilteredData()
@@ -189,19 +217,11 @@ function ClosingStatus({ tabKey }) {
     setClosingMonth(getDefaultClosingMonth())
   }
 
-  // 통계 계산
-  const stats = {
-    total: filteredData.length,
-    closed: filteredData.filter(d => d.status === '마감완료').length,
-    inProgress: filteredData.filter(d => d.status === '진행중').length,
-    notClosed: filteredData.filter(d => d.status === '미마감').length,
-  }
-
   return (
     <div>
       <PageHeader 
         icon={<FileTextOutlined />} 
-        title="마감현황" 
+        title="전사마감현황 목록" 
         extra={<SearchButtons onSearch={handleSearch} onReset={handleReset} />}
       />
 
@@ -233,21 +253,18 @@ function ClosingStatus({ tabKey }) {
         </Form.Item>
       </SearchForm>
 
-      {/* 결과 요약 */}
-      <Row gutter={16} style={{ marginBottom: 16 }}>
-        <Col span={6}>
-          <StatCard title="전체" value={stats.total} suffix="건" />
-        </Col>
-        <Col span={6}>
-          <StatCard title="마감완료" value={stats.closed} suffix="건" color="#52c41a" />
-        </Col>
-        <Col span={6}>
-          <StatCard title="진행중" value={stats.inProgress} suffix="건" color="#1890ff" />
-        </Col>
-        <Col span={6}>
-          <StatCard title="미마감" value={stats.notClosed} suffix="건" color="#ff4d4f" />
-        </Col>
-      </Row>
+      {/* 상단 체크박스 (그림과 동일) */}
+      <div style={{ marginBottom: 12, display: 'flex', flexWrap: 'wrap', gap: '16px 24px', alignItems: 'center' }}>
+        {SECTION_CHECKBOXES.map(({ key, label }) => (
+          <Checkbox
+            key={key}
+            checked={sectionChecked[key]}
+            onChange={(e) => setSectionChecked((prev) => ({ ...prev, [key]: e.target.checked }))}
+          >
+            {label}
+          </Checkbox>
+        ))}
+      </div>
 
       {/* 마감현황 그리드 - Loader 방식 */}
       <Card>

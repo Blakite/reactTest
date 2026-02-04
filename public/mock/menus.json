@@ -17,82 +17,364 @@
     {
       "id": "ACC_DASHBOARD",
       "moduleId": "accounting",
+      "parentId": null,
       "key": "/accounting",
       "label": "대시보드",
       "icon": "DashboardOutlined",
       "componentPath": "accounting/Dashboard",
+      "type": "item",
+      "sortOrder": 0
+    },
+    {
+      "id": "ACC_VOUCHER_MGMT",
+      "moduleId": "accounting",
+      "parentId": null,
+      "key": "acc_voucher_mgmt",
+      "label": "전표관리",
+      "icon": "AuditOutlined",
+      "type": "folder",
       "sortOrder": 1
     },
     {
-      "id": "ACC_JOURNAL",
+      "id": "ACC_VOUCHER_ISSUE_MGMT",
       "moduleId": "accounting",
+      "parentId": "ACC_VOUCHER_MGMT",
+      "key": "acc_voucher_issue_mgmt",
+      "label": "전표발행관리",
+      "icon": "FolderOutlined",
+      "type": "folder",
+      "sortOrder": 1
+    },
+    {
+      "id": "ACC_VOUCHER_ISSUE",
+      "moduleId": "accounting",
+      "parentId": "ACC_VOUCHER_ISSUE_MGMT",
       "key": "/accounting/journal",
+      "label": "전표발행",
+      "icon": "FileTextOutlined",
+      "componentPath": "accounting/JournalEntry",
+      "type": "item",
+      "sortOrder": 1
+    },
+    {
+      "id": "ACC_TAX_INVOICE_VOUCHER",
+      "moduleId": "accounting",
+      "parentId": "ACC_VOUCHER_ISSUE_MGMT",
+      "key": "/accounting/vouchers/tax-invoice",
+      "label": "세금계산서전표발행",
+      "icon": "FileOutlined",
+      "componentPath": "common/BlankPage",
+      "type": "item",
+      "sortOrder": 2
+    },
+    {
+      "id": "ACC_DEPT_EXPENSE_VOUCHER",
+      "moduleId": "accounting",
+      "parentId": "ACC_VOUCHER_ISSUE_MGMT",
+      "key": "/accounting/vouchers/dept-expense",
+      "label": "부서경비전표발행",
+      "icon": "FileOutlined",
+      "componentPath": "common/BlankPage",
+      "type": "item",
+      "sortOrder": 3
+    },
+    {
+      "id": "ACC_PERSONAL_EXPENSE",
+      "moduleId": "accounting",
+      "parentId": "ACC_VOUCHER_ISSUE_MGMT",
+      "key": "/accounting/vouchers/personal-expense",
+      "label": "개인경비신청관리",
+      "icon": "FileOutlined",
+      "componentPath": "common/BlankPage",
+      "type": "item",
+      "sortOrder": 4
+    },
+    {
+      "id": "ACC_ADVANCE_PAYMENT",
+      "moduleId": "accounting",
+      "parentId": "ACC_VOUCHER_ISSUE_MGMT",
+      "key": "/accounting/vouchers/advance",
+      "label": "가지급금신청",
+      "icon": "FileOutlined",
+      "componentPath": "common/BlankPage",
+      "type": "item",
+      "sortOrder": 5
+    },
+    {
+      "id": "ACC_UNSETTLED_REVERSAL",
+      "moduleId": "accounting",
+      "parentId": "ACC_VOUCHER_ISSUE_MGMT",
+      "key": "/accounting/vouchers/unsettled-reversal",
+      "label": "미결반제전표발행",
+      "icon": "FileOutlined",
+      "componentPath": "common/BlankPage",
+      "type": "item",
+      "sortOrder": 6
+    },
+    {
+      "id": "ACC_TEMP_VOUCHER_STATUS",
+      "moduleId": "accounting",
+      "parentId": "ACC_VOUCHER_ISSUE_MGMT",
+      "key": "/accounting/vouchers/temp",
+      "label": "임시저장전표현황",
+      "icon": "FileOutlined",
+      "componentPath": "common/BlankPage",
+      "type": "item",
+      "sortOrder": 7
+    },
+    {
+      "id": "ACC_CORP_CARD_VOUCHER",
+      "moduleId": "accounting",
+      "parentId": "ACC_VOUCHER_ISSUE_MGMT",
+      "key": "/accounting/vouchers/corp-card",
+      "label": "법인카드전표발행",
+      "icon": "CreditCardOutlined",
+      "componentPath": "common/BlankPage",
+      "type": "item",
+      "sortOrder": 8
+    },
+    {
+      "id": "ACC_CLOSING_VOUCHER",
+      "moduleId": "accounting",
+      "parentId": "ACC_VOUCHER_ISSUE_MGMT",
+      "key": "/accounting/vouchers/closing",
+      "label": "결산전표발행",
+      "icon": "FileOutlined",
+      "componentPath": "common/BlankPage",
+      "type": "item",
+      "sortOrder": 9
+    },
+    {
+      "id": "ACC_UNSETTLED_VOUCHER_MGMT",
+      "moduleId": "accounting",
+      "parentId": "ACC_VOUCHER_ISSUE_MGMT",
+      "key": "/accounting/vouchers/unsettled",
+      "label": "미결전표관리",
+      "icon": "FileOutlined",
+      "componentPath": "common/BlankPage",
+      "type": "item",
+      "sortOrder": 10
+    },
+    {
+      "id": "ACC_COMMON_COST_ALLOC",
+      "moduleId": "accounting",
+      "parentId": "ACC_VOUCHER_ISSUE_MGMT",
+      "key": "/accounting/vouchers/common-cost",
+      "label": "공통비원가배부",
+      "icon": "FileOutlined",
+      "componentPath": "common/BlankPage",
+      "type": "item",
+      "sortOrder": 11
+    },
+    {
+      "id": "ACC_VOUCHER_APPROVAL_MGMT",
+      "moduleId": "accounting",
+      "parentId": "ACC_VOUCHER_MGMT",
+      "key": "acc_voucher_approval_mgmt",
+      "label": "전표승인관리",
+      "icon": "FolderOutlined",
+      "type": "folder",
+      "sortOrder": 2
+    },
+    {
+      "id": "ACC_VOUCHER_INQUIRY",
+      "moduleId": "accounting",
+      "parentId": "ACC_VOUCHER_MGMT",
+      "key": "acc_voucher_inquiry",
+      "label": "전표조회",
+      "icon": "FolderOutlined",
+      "type": "folder",
+      "sortOrder": 3
+    },
+    {
+      "id": "ACC_INQUIRY_VOUCHER_MGMT",
+      "moduleId": "accounting",
+      "parentId": "ACC_VOUCHER_INQUIRY",
+      "key": "/accounting/inquiry/voucher-mgmt",
+      "label": "전표관리",
+      "icon": "FileOutlined",
+      "componentPath": "accounting/VoucherList",
+      "type": "item",
+      "sortOrder": 0
+    },
+    {
+      "id": "ACC_VOUCHER_INQUIRY_LIST",
+      "moduleId": "accounting",
+      "parentId": "ACC_VOUCHER_INQUIRY",
+      "key": "/accounting/inquiry/voucher",
+      "label": "전표조회",
+      "icon": "FileOutlined",
+      "componentPath": "common/BlankPage",
+      "type": "item",
+      "sortOrder": 1
+    },
+    {
+      "id": "ACC_VOUCHER_ISSUE_HISTORY",
+      "moduleId": "accounting",
+      "parentId": "ACC_VOUCHER_INQUIRY",
+      "key": "/accounting/inquiry/history",
+      "label": "전표발행History조회",
+      "icon": "FileOutlined",
+      "componentPath": "common/BlankPage",
+      "type": "item",
+      "sortOrder": 2
+    },
+    {
+      "id": "ACC_DAILY_STATEMENT",
+      "moduleId": "accounting",
+      "parentId": "ACC_VOUCHER_INQUIRY",
+      "key": "/accounting/inquiry/daily",
+      "label": "일계표",
+      "icon": "FileOutlined",
+      "componentPath": "common/BlankPage",
+      "type": "item",
+      "sortOrder": 3
+    },
+    {
+      "id": "ACC_LEDGER_MGMT",
+      "moduleId": "accounting",
+      "parentId": "ACC_VOUCHER_MGMT",
+      "key": "acc_ledger_mgmt",
+      "label": "원장관리",
+      "icon": "FolderOutlined",
+      "type": "folder",
+      "sortOrder": 4
+    },
+    {
+      "id": "ACC_LEDGER_JOURNAL",
+      "moduleId": "accounting",
+      "parentId": "ACC_LEDGER_MGMT",
+      "key": "/accounting/ledger/journal",
       "label": "분개장",
       "icon": "FileTextOutlined",
       "componentPath": "accounting/JournalEntry",
+      "type": "item",
+      "sortOrder": 1
+    },
+    {
+      "id": "ACC_SETTLEMENT_MGMT",
+      "moduleId": "accounting",
+      "parentId": null,
+      "key": "acc_settlement_mgmt",
+      "label": "결산관리",
+      "icon": "CalculatorOutlined",
+      "type": "folder",
       "sortOrder": 2
+    },
+    {
+      "id": "ACC_CONST_SALES_COST",
+      "moduleId": "accounting",
+      "parentId": null,
+      "key": "acc_const_sales_cost",
+      "label": "건설매출원가관리",
+      "icon": "FileTextOutlined",
+      "type": "folder",
+      "sortOrder": 3
+    },
+    {
+      "id": "ACC_LEASE_MGMT",
+      "moduleId": "accounting",
+      "parentId": null,
+      "key": "acc_lease_mgmt",
+      "label": "리스관리",
+      "icon": "FileTextOutlined",
+      "type": "folder",
+      "sortOrder": 4
+    },
+    {
+      "id": "ACC_ASSET_MGMT",
+      "moduleId": "accounting",
+      "parentId": null,
+      "key": "acc_asset_mgmt",
+      "label": "자산관리",
+      "icon": "DatabaseOutlined",
+      "type": "folder",
+      "sortOrder": 5
+    },
+    {
+      "id": "ACC_TAX_MGMT",
+      "moduleId": "accounting",
+      "parentId": null,
+      "key": "acc_tax_mgmt",
+      "label": "세무관리",
+      "icon": "AccountBookOutlined",
+      "type": "folder",
+      "sortOrder": 6
+    },
+    {
+      "id": "ACC_BASE_INFO",
+      "moduleId": "accounting",
+      "parentId": null,
+      "key": "acc_base_info",
+      "label": "기준정보",
+      "icon": "AppstoreOutlined",
+      "type": "folder",
+      "sortOrder": 7
     },
     {
       "id": "ACC_ACCOUNTS",
       "moduleId": "accounting",
+      "parentId": "ACC_BASE_INFO",
       "key": "/accounting/accounts",
       "label": "계정과목",
       "icon": "ProfileOutlined",
       "componentPath": "accounting/AccountList",
-      "sortOrder": 3
-    },
-    {
-      "id": "ACC_VOUCHERS",
-      "moduleId": "accounting",
-      "key": "/accounting/vouchers",
-      "label": "전표관리",
-      "icon": "AuditOutlined",
-      "componentPath": "accounting/VoucherList",
-      "sortOrder": 4
+      "type": "item",
+      "sortOrder": 1
     },
     {
       "id": "ACC_CLOSING",
       "moduleId": "accounting",
+      "parentId": "ACC_SETTLEMENT_MGMT",
       "key": "/accounting/closing",
       "label": "마감현황",
       "icon": "CheckCircleOutlined",
       "componentPath": "accounting/ClosingStatus",
-      "sortOrder": 5
+      "type": "item",
+      "sortOrder": 1
     },
     {
       "id": "CON_DASHBOARD",
       "moduleId": "construction",
+      "parentId": null,
       "key": "/construction",
       "label": "대시보드",
       "icon": "DashboardOutlined",
       "componentPath": "construction/Dashboard",
+      "type": "item",
       "sortOrder": 1
     },
     {
       "id": "CON_PROJECTS",
       "moduleId": "construction",
+      "parentId": null,
       "key": "/construction/projects",
       "label": "공사목록",
       "icon": "ProjectOutlined",
       "componentPath": "construction/ProjectList",
+      "type": "item",
       "sortOrder": 2
     },
     {
       "id": "CON_CONTRACTS",
       "moduleId": "construction",
+      "parentId": null,
       "key": "/construction/contracts",
       "label": "계약관리",
       "icon": "ContainerOutlined",
       "componentPath": "construction/ContractList",
+      "type": "item",
       "sortOrder": 3
     },
     {
       "id": "CON_PROGRESS",
       "moduleId": "construction",
+      "parentId": null,
       "key": "/construction/progress",
       "label": "기성관리",
       "icon": "BarChartOutlined",
       "componentPath": "construction/ProgressReport",
+      "type": "item",
       "sortOrder": 4
     }
   ]
